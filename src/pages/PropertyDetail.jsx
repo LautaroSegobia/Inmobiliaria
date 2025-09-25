@@ -1,25 +1,47 @@
 
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
-const mockProperties = [
-  { id: 1, title: "Casa en el centro", location: "Ciudad", price: 120000, type: "Casa", image: "https://via.placeholder.com/600x400" },
-  { id: 2, title: "Departamento moderno", location: "Barrio Norte", price: 90000, type: "Departamento", image: "https://via.placeholder.com/600x400" },
-  { id: 3, title: "Chalet con jardín", location: "Suburbios", price: 150000, type: "Chalet", image: "https://via.placeholder.com/600x400" }
-];
 
 export default function PropertyDetail() {
   const { id } = useParams();
-  const property = mockProperties.find((p) => p.id === parseInt(id));
+  const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!property) return <p>Propiedad no encontrada</p>;
+  useEffect(() => {
+    fetch(`https://68cca15b716562cf5077f884.mockapi.io/properties/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProperty(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error al traer propiedad:", err);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) return <p>Cargando propiedad...</p>;
+  if (!property) return <p>No se encontró la propiedad</p>;
 
   return (
     <div className="property-detail">
-      <img src={property.image} alt={property.title} />
-      <h2>{property.title}</h2>
-      <p>{property.location}</p>
-      <p>{property.type}</p>
-      <p>${property.price.toLocaleString()}</p>
+      <div className="property-detail__image">
+        <img src={property.image} alt={property.title} />
+      </div>
+      <div className="property-detail__content">
+        <h1>{property.title}</h1>
+        <p className="property-detail__location">{property.location}</p>
+        <p className="property-detail__price">${property.price}</p>
+        <p className="property-detail__description">{property.description}</p>
+
+        <ul className="property-detail__features">
+          {property.rooms && <li>Ambientes: {property.rooms}</li>}
+          {property.bedrooms && <li>Dormitorios: {property.bedrooms}</li>}
+          {property.bathrooms && <li>Baños: {property.bathrooms}</li>}
+          {property.area && <li>Área: {property.area} m²</li>}
+          <li>{property.available ? "Disponible ✅" : "No disponible ❌"}</li>
+        </ul>
+      </div>
     </div>
   );
 }

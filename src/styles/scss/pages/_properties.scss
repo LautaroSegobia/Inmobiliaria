@@ -1,18 +1,18 @@
 
+@use "../abstracts/variables" as *;
+
 .properties {
   padding: 2rem;
 
   h1 {
     text-align: center;
     margin-bottom: 2rem;
-    font-size: 2rem;
-    color: #333;
+    color: $primary-color;
   }
 
   .properties-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
-    justify-items: center;
   }
 }

@@ -1,9 +1,8 @@
 
 @use "./abstracts/variables" as *;
-@use "./abstracts/mixins";
+@use "./abstracts/mixins" as *;
 
 @use "./base/base";
-@use "./base/global";
 @use "./base/reset";
 @use "./base/typography";
 
@@ -29,49 +28,5 @@ body {
 }
 
 h1 {
-  color: #0044cc;
-}
-
-.properties-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  padding: 2rem;
-}
-
-.card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.03);
-  }
-
-  img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-
-  h3 {
-    margin: 0.5rem;
-    font-size: 1.2rem;
-  }
-
-  p {
-    margin: 0.3rem 0.5rem;
-    color: #555;
-  }
-
-  span {
-    display: inline-block;
-    margin: 0.5rem;
-    padding: 0.2rem 0.5rem;
-    background: #eee;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
+  color: $primary-color;
 }

@@ -28,10 +28,12 @@ export default function Properties() {
         {properties.map((property) => (
           <Card
             key={property.id}
+            id={property.id}
             title={property.title}
             location={property.location}
             price={property.price}
             image={property.image}
+            tag={property.tag}
           />
         ))}
       </div>

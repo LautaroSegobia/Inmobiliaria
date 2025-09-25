@@ -31,6 +31,7 @@ export default function useForm(initialValues, validate, onSubmit) {
 
   return {
     form,
+    setForm,
     errors,
     handleChange,
     handleSubmit,
