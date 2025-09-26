@@ -1,5 +1,6 @@
 
 import useForm from "../hooks/useForm";
+import API_BASE_URL from "../config/api";
 
 export default function AddProperty() {
   const initialValues = {
@@ -13,49 +14,59 @@ export default function AddProperty() {
     area: "",
     image: "",
     tag: "",
+    operation: "",
+    type: "",
     available: true,
-  };
-
-  const formatCurrency = (value) => {
-    if (!value) return "";
-    const numericValue = value.toString().replace(/\D/g, "");
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-      minimumFractionDigits: 0,
-    }).format(numericValue);
   };
 
   const validate = (values) => {
     let errors = {};
+
     if (!values.title.trim()) errors.title = "El título es obligatorio";
     if (!values.description.trim()) errors.description = "La descripción es obligatoria";
 
-    const numericPrice = Number(values.price.toString().replace(/\D/g, ""));
-    if (!numericPrice || numericPrice <= 0) errors.price = "El precio debe ser mayor a 0";
+    if (!values.price || Number(values.price) <= 0) {
+      errors.price = "El precio debe ser mayor a 0";
+    }
 
     if (!values.location.trim()) errors.location = "La ubicación es obligatoria";
 
-    const numericArea = Number(values.area);
-    if (values.area && numericArea <= 0) errors.area = "El área debe ser mayor a 0";
+    if (values.rooms && Number(values.rooms) < 0) {
+      errors.rooms = "Los ambientes no pueden ser negativos";
+    }
+
+    if (values.bedrooms && Number(values.bedrooms) < 0) {
+      errors.bedrooms = "Los dormitorios no pueden ser negativos";
+    }
+
+    if (values.bathrooms && Number(values.bathrooms) < 0) {
+      errors.bathrooms = "Los baños no pueden ser negativos";
+    }
+
+    if (values.area && Number(values.area) <= 0) {
+      errors.area = "El área debe ser mayor a 0";
+    }
 
     if (values.image && !/^https?:\/\/.+/i.test(values.image)) {
       errors.image = "Debe ser una URL válida";
+    }
+
+    if (!values.operation) {
+      errors.operation = "Debes seleccionar si es compra o alquiler";
+    }
+
+    if (!values.type) {
+      errors.type = "Debes seleccionar el tipo de propiedad";
     }
 
     return errors;
   };
 
   const onSubmit = (values) => {
-    const payload = {
-      ...values,
-      price: Number(values.price.toString().replace(/\D/g, "")),
-    };
-
-    fetch("https://68cca15b716562cf5077f884.mockapi.io/properties", {
+    fetch(`${API_BASE_URL}/properties`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(values),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -65,23 +76,14 @@ export default function AddProperty() {
       .catch((err) => console.error("Error al crear propiedad:", err));
   };
 
-  const { form, errors, handleChange, handleSubmit, setForm } = useForm(
-    initialValues,
-    validate,
-    onSubmit
-  );
-
-  const handlePriceChange = (e) => {
-    const { value } = e.target;
-    const formatted = formatCurrency(value);
-    setForm({ ...form, price: formatted });
-  };
+  const { form, errors, handleChange, handleSubmit } = useForm(initialValues, validate, onSubmit);
 
   return (
     <div className="page">
       <h1>Agregar nueva propiedad</h1>
       <form onSubmit={handleSubmit}>
-        <div>
+        {/* Título */}
+        <div className="form-group">
           <label>Título:</label>
           <input
             type="text"
@@ -93,7 +95,8 @@ export default function AddProperty() {
           {errors.title && <p className="error">{errors.title}</p>}
         </div>
 
-        <div>
+        {/* Descripción */}
+        <div className="form-group">
           <label>Descripción:</label>
           <textarea
             name="description"
@@ -104,19 +107,21 @@ export default function AddProperty() {
           {errors.description && <p className="error">{errors.description}</p>}
         </div>
 
-        <div>
-          <label>Precio:</label>
+        {/* Precio */}
+        <div className="form-group">
+          <label>Precio ($):</label>
           <input
-            type="text"
+            type="number"
             name="price"
             value={form.price}
-            onChange={handlePriceChange}
+            onChange={handleChange}
             className={errors.price ? "error-input" : ""}
           />
           {errors.price && <p className="error">{errors.price}</p>}
         </div>
 
-        <div>
+        {/* Ubicación */}
+        <div className="form-group">
           <label>Ubicación:</label>
           <input
             type="text"
@@ -128,22 +133,47 @@ export default function AddProperty() {
           {errors.location && <p className="error">{errors.location}</p>}
         </div>
 
-        <div>
+        {/* c/Ambientes */}
+        <div className="form-group">
           <label>Ambientes:</label>
-          <input type="number" name="rooms" value={form.rooms} onChange={handleChange} />
+          <input
+            type="number"
+            name="rooms"
+            value={form.rooms}
+            onChange={handleChange}
+            className={errors.rooms ? "error-input" : ""}
+          />
+          {errors.rooms && <p className="error">{errors.rooms}</p>}
         </div>
 
-        <div>
+        {/* c/Dormitorios */}
+        <div className="form-group">
           <label>Dormitorios:</label>
-          <input type="number" name="bedrooms" value={form.bedrooms} onChange={handleChange} />
+          <input
+            type="number"
+            name="bedrooms"
+            value={form.bedrooms}
+            onChange={handleChange}
+            className={errors.bedrooms ? "error-input" : ""}
+          />
+          {errors.bedrooms && <p className="error">{errors.bedrooms}</p>}
         </div>
 
-        <div>
+        {/* c/Baños */}
+        <div className="form-group">
           <label>Baños:</label>
-          <input type="number" name="bathrooms" value={form.bathrooms} onChange={handleChange} />
+          <input
+            type="number"
+            name="bathrooms"
+            value={form.bathrooms}
+            onChange={handleChange}
+            className={errors.bathrooms ? "error-input" : ""}
+          />
+          {errors.bathrooms && <p className="error">{errors.bathrooms}</p>}
         </div>
 
-        <div>
+        {/* Área */}
+        <div className="form-group">
           <label>Área (m²):</label>
           <input
             type="number"
@@ -155,7 +185,8 @@ export default function AddProperty() {
           {errors.area && <p className="error">{errors.area}</p>}
         </div>
 
-        <div>
+        {/* Imagen */}
+        <div className="form-group">
           <label>URL de la imagen:</label>
           <input
             type="text"
@@ -167,7 +198,8 @@ export default function AddProperty() {
           {errors.image && <p className="error">{errors.image}</p>}
         </div>
 
-        <div>
+        {/* tags */}
+        <div className="form-group">
           <label>Etiqueta (Tag):</label>
           <select name="tag" value={form.tag} onChange={handleChange}>
             <option value="">Ninguna</option>
@@ -177,7 +209,54 @@ export default function AddProperty() {
           </select>
         </div>
 
-        <button type="submit">Agregar propiedad</button>
+        {/* Compra/Venta */}
+        <div className="form-group">
+          <label>Operación:</label>
+          <select
+            name="operation"
+            value={form.operation}
+            onChange={handleChange}
+            className={errors.operation ? "error-input" : ""}
+          >
+            <option value="">Seleccionar</option>
+            <option value="comprar">Comprar</option>
+            <option value="alquilar">Alquilar</option>
+          </select>
+          {errors.operation && <p className="error">{errors.operation}</p>}
+        </div>
+
+        {/* Tipo de propiedad */}
+        <div className="form-group">
+          <label>Tipo de propiedad:</label>
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            className={errors.type ? "error-input" : ""}
+          >
+            <option value="">Seleccionar</option>
+            <option value="casa">Casa</option>
+            <option value="departamento">Departamento</option>
+            <option value="comercial">Comercial</option>
+          </select>
+          {errors.type && <p className="error">{errors.type}</p>}
+        </div>
+
+        {/* Disponible */}
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              name="available"
+              checked={form.available}
+              onChange={handleChange}
+            />
+            Disponible
+          </label>
+        </div>
+        <div className="form-actions">
+          <button type="submit">Agregar propiedad</button>
+        </div>
       </form>
     </div>
   );

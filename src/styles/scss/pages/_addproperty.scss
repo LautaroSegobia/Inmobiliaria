@@ -1,65 +1,94 @@
 
-.add-property {
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+@use "../abstracts/variables" as *;
 
-  h2 {
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: $background-color;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba($dark-color, 0.08);
+
+  h1 {
+    font-family: $font-stack;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: $primary-color;
     text-align: center;
-    margin-bottom: 1.5rem;
-    color: #0044cc;
   }
 
   form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
 
-    label {
+    .form-group {
       display: flex;
       flex-direction: column;
-      font-weight: bold;
-      color: #333;
-    }
 
-    input,
-    select,
-    textarea {
-      padding: 0.6rem;
-      margin-top: 0.3rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-      resize: vertical;
-    }
+      label {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: $dark-color;
+      }
 
-    textarea {
-      min-height: 80px;
-    }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-family: $font-stack;
+        font-size: 1rem;
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        background-color: $light-color;
+        color: $text-color;
+        transition: border-color 0.2s ease-in-out;
 
-    button {
-      padding: 0.9rem;
-      background: #0044cc;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      transition: background 0.3s;
+        &:focus {
+          border-color: $primary-color;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba($primary-color, 0.15);
+        }
 
-      &:hover {
-        background: #003399;
+        &.error-input {
+          border-color: red;
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .error {
+        font-size: 0.9rem;
+        color: red;
+        margin-top: 0.3rem;
       }
     }
 
-    .error {
-      color: red;
-      font-size: 0.85rem;
-      margin-top: 0.2rem;
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+
+      button {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: bold;
+        color: #fff;
+        background-color: $primary-color;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+
+        &:hover {
+          background-color: $secondary-color;
+        }
+      }
     }
   }
 }

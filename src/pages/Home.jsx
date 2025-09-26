@@ -1,28 +1,59 @@
 
-import { Link } from "react-router-dom";
-
-const mockProperties = [
-  { id: 1, title: "Casa en el centro", price: 120000, location: "Ciudad", image: "https://imgar.zonapropcdn.com/avisos/1/00/56/98/75/85/720x532/1995947639.jpg?isFirstImage=true" },
-  { id: 2, title: "Departamento moderno", price: 95000, location: "Playa", image: "https://cdn.prod.website-files.com/61e9b342b016364181c41f50/62a014dd84797690c528f25e_38.jpg" },
-  { id: 3, title: "Chalet con jardín", price: 180000, location: "Montaña", image: "https://theconcretehome.com/wp-content/uploads/2025/06/Chalet-TCH-Milan-2025-DIURNO02-3000x-view0004-1024x576.webp" },
-];
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
+  const [operation, setOperation] = useState("comprar");
+  const [type, setType] = useState("casa");
+  const [location, setLocation] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(
+      `/properties?operation=${operation}&type=${type}&location=${location}`
+    );
+  };
+
   return (
-    <div className="home-page">
-      <h1>Inmobiliaria</h1>
-      <div className="properties-list">
-        {mockProperties.map((property) => (
-          <div key={property.id} className="card">
-            <img src={property.image} alt={property.title} />
-            <h2>{property.title}</h2>
-            <p>{property.location}</p>
-            <p>${property.price.toLocaleString()}</p>
-            <Link to={`/properties/${property.id}`} className="btn">
-              Ver Detalles
-            </Link>
+    <div className="home">
+      <div className="home__hero">
+        <h1 className="home__title">Encontrá tu hogar</h1>
+
+        <form className="home__search" onSubmit={handleSearch}>
+          <div className="home__search-row">
+            <div className="home__search-group">
+              <label>Operación</label>
+              <select value={operation} onChange={(e) => setOperation(e.target.value)}>
+                <option value="comprar">Comprar</option>
+                <option value="alquilar">Alquilar</option>
+              </select>
+            </div>
+
+            <div className="home__search-group">
+              <label>Tipo</label>
+              <select value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="casa">Casa</option>
+                <option value="departamento">Departamento</option>
+                <option value="terreno">Terreno</option>
+              </select>
+            </div>
+
+            <div className="home__search-group">
+              <label>Ubicación</label>
+              <input
+                type="text"
+                placeholder="Ej: Palermo, Córdoba..."
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" className="btn btn--primary">
+              Buscar
+            </button>
           </div>
-        ))}
+        </form>
       </div>
     </div>
   );

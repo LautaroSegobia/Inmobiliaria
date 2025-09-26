@@ -2,7 +2,11 @@
 import React from "react";
 import Card from "./Card";
 
-export default function CardsGrid({ properties }) {
+export default function CardsGrid({ properties = [] }) {
+  if (!properties.length) {
+    return <p>No hay propiedades disponibles</p>;
+  }
+
   return (
     <div className="cards-grid">
       {properties.map((property) => (
