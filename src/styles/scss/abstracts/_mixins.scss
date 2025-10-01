@@ -1,0 +1,46 @@
+
+@use "variables" as *;
+
+@mixin button($bg, $hover-bg, $text-color: #fff) {
+  background: $bg;
+  color: $text-color;
+  border: none;
+  padding: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s;
+
+  &:hover {
+    background: $hover-bg;
+  }
+
+  &:disabled {
+    background: $primary-color-disabled;
+    cursor: not-allowed;
+  }
+}
+
+@mixin input-style {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+    box-shadow: 0 0 4px rgba($primary-color, 0.4);
+  }
+
+  &.error-input {
+    border-color: red;
+  }
+}
+
+@mixin card-shadow($intensity: 0.1) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, $intensity);
+}

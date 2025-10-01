@@ -1,263 +1,167 @@
 
-import useForm from "../hooks/useForm";
-import API_BASE_URL from "../config/api";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 
-export default function AddProperty() {
-  const initialValues = {
-    title: "",
-    description: "",
-    price: "",
-    location: "",
-    rooms: "",
-    bedrooms: "",
-    bathrooms: "",
-    area: "",
-    image: "",
-    tag: "",
-    operation: "",
-    type: "",
-    available: true,
+const schema = yup.object().shape({
+  titulo: yup
+    .string()
+    .required("El título es obligatorio")
+    .min(3, "Debe tener al menos 3 caracteres"),
+  descripcion: yup
+    .string()
+    .required("La descripción es obligatoria")
+    .min(10, "Debe tener al menos 10 caracteres"),
+  precio: yup
+    .number()
+    .typeError("Debe ser un número")
+    .positive("Debe ser mayor a 0")
+    .required("El precio es obligatorio"),
+  area: yup
+    .number()
+    .typeError("Debe ser un número")
+    .positive("Debe ser mayor a 0")
+    .required("El área es obligatoria"),
+  ambientes: yup
+    .number()
+    .typeError("Debe ser un número")
+    .min(1, "Debe ser al menos 1")
+    .required("Los ambientes son obligatorios"),
+  dormitorios: yup
+    .number()
+    .typeError("Debe ser un número")
+    .min(0, "No puede ser negativo")
+    .required("Los dormitorios son obligatorios"),
+  banios: yup
+    .number()
+    .typeError("Debe ser un número")
+    .min(0, "No puede ser negativo")
+    .required("Los baños son obligatorios"),
+  ubicacion: yup.string().required("La ubicación es obligatoria"),
+  imagen: yup
+    .string()
+    .url("Debe ser una URL válida")
+    .nullable()
+    .notRequired(),
+  operacion: yup.string().required("Debes seleccionar una operación"),
+  tipo: yup.string().required("Debes seleccionar un tipo de propiedad"),
+});
+
+const AddProperty = () => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      const res = await fetch(
+        "https://68cca15b716562cf5077f884.mockapi.io",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
+      if (!res.ok) throw new Error("Error al guardar la propiedad");
+      alert("Propiedad agregada con éxito 🎉");
+      reset();
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un problema al guardar la propiedad");
+    }
   };
-
-  const validate = (values) => {
-    let errors = {};
-
-    if (!values.title.trim()) errors.title = "El título es obligatorio";
-    if (!values.description.trim()) errors.description = "La descripción es obligatoria";
-
-    if (!values.price || Number(values.price) <= 0) {
-      errors.price = "El precio debe ser mayor a 0";
-    }
-
-    if (!values.location.trim()) errors.location = "La ubicación es obligatoria";
-
-    if (values.rooms && Number(values.rooms) < 0) {
-      errors.rooms = "Los ambientes no pueden ser negativos";
-    }
-
-    if (values.bedrooms && Number(values.bedrooms) < 0) {
-      errors.bedrooms = "Los dormitorios no pueden ser negativos";
-    }
-
-    if (values.bathrooms && Number(values.bathrooms) < 0) {
-      errors.bathrooms = "Los baños no pueden ser negativos";
-    }
-
-    if (values.area && Number(values.area) <= 0) {
-      errors.area = "El área debe ser mayor a 0";
-    }
-
-    if (values.image && !/^https?:\/\/.+/i.test(values.image)) {
-      errors.image = "Debe ser una URL válida";
-    }
-
-    if (!values.operation) {
-      errors.operation = "Debes seleccionar si es compra o alquiler";
-    }
-
-    if (!values.type) {
-      errors.type = "Debes seleccionar el tipo de propiedad";
-    }
-
-    return errors;
-  };
-
-  const onSubmit = (values) => {
-    fetch(`${API_BASE_URL}/properties`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert("Propiedad agregada con éxito 🎉");
-        console.log("Nueva propiedad:", data);
-      })
-      .catch((err) => console.error("Error al crear propiedad:", err));
-  };
-
-  const { form, errors, handleChange, handleSubmit } = useForm(initialValues, validate, onSubmit);
 
   return (
-    <div className="page">
-      <h1>Agregar nueva propiedad</h1>
-      <form onSubmit={handleSubmit}>
-        {/* Título */}
+    <div className="add-property">
+      <h2>Agregar Propiedad</h2>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-group">
-          <label>Título:</label>
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className={errors.title ? "error-input" : ""}
-          />
-          {errors.title && <p className="error">{errors.title}</p>}
+          <label>Título</label>
+          <input {...register("titulo")} />
+          <p className="error">{errors.titulo?.message}</p>
         </div>
 
-        {/* Descripción */}
         <div className="form-group">
-          <label>Descripción:</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            className={errors.description ? "error-input" : ""}
-          />
-          {errors.description && <p className="error">{errors.description}</p>}
+          <label>Descripción</label>
+          <textarea {...register("descripcion")} />
+          <p className="error">{errors.descripcion?.message}</p>
         </div>
 
-        {/* Precio */}
         <div className="form-group">
-          <label>Precio ($):</label>
-          <input
-            type="number"
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-            className={errors.price ? "error-input" : ""}
-          />
-          {errors.price && <p className="error">{errors.price}</p>}
+          <label>Precio</label>
+          <input type="number" {...register("precio")} />
+          <p className="error">{errors.precio?.message}</p>
         </div>
 
-        {/* Ubicación */}
         <div className="form-group">
-          <label>Ubicación:</label>
-          <input
-            type="text"
-            name="location"
-            value={form.location}
-            onChange={handleChange}
-            className={errors.location ? "error-input" : ""}
-          />
-          {errors.location && <p className="error">{errors.location}</p>}
+          <label>Área (m²)</label>
+          <input type="number" {...register("area")} />
+          <p className="error">{errors.area?.message}</p>
         </div>
 
-        {/* c/Ambientes */}
         <div className="form-group">
-          <label>Ambientes:</label>
-          <input
-            type="number"
-            name="rooms"
-            value={form.rooms}
-            onChange={handleChange}
-            className={errors.rooms ? "error-input" : ""}
-          />
-          {errors.rooms && <p className="error">{errors.rooms}</p>}
+          <label>Ambientes</label>
+          <input type="number" {...register("ambientes")} />
+          <p className="error">{errors.ambientes?.message}</p>
         </div>
 
-        {/* c/Dormitorios */}
         <div className="form-group">
-          <label>Dormitorios:</label>
-          <input
-            type="number"
-            name="bedrooms"
-            value={form.bedrooms}
-            onChange={handleChange}
-            className={errors.bedrooms ? "error-input" : ""}
-          />
-          {errors.bedrooms && <p className="error">{errors.bedrooms}</p>}
+          <label>Dormitorios</label>
+          <input type="number" {...register("dormitorios")} />
+          <p className="error">{errors.dormitorios?.message}</p>
         </div>
 
-        {/* c/Baños */}
         <div className="form-group">
-          <label>Baños:</label>
-          <input
-            type="number"
-            name="bathrooms"
-            value={form.bathrooms}
-            onChange={handleChange}
-            className={errors.bathrooms ? "error-input" : ""}
-          />
-          {errors.bathrooms && <p className="error">{errors.bathrooms}</p>}
+          <label>Baños</label>
+          <input type="number" {...register("banios")} />
+          <p className="error">{errors.banios?.message}</p>
         </div>
 
-        {/* Área */}
         <div className="form-group">
-          <label>Área (m²):</label>
-          <input
-            type="number"
-            name="area"
-            value={form.area}
-            onChange={handleChange}
-            className={errors.area ? "error-input" : ""}
-          />
-          {errors.area && <p className="error">{errors.area}</p>}
+          <label>Ubicación</label>
+          <input {...register("ubicacion")} />
+          <p className="error">{errors.ubicacion?.message}</p>
         </div>
 
-        {/* Imagen */}
         <div className="form-group">
-          <label>URL de la imagen:</label>
-          <input
-            type="text"
-            name="image"
-            value={form.image}
-            onChange={handleChange}
-            className={errors.image ? "error-input" : ""}
-          />
-          {errors.image && <p className="error">{errors.image}</p>}
+          <label>Imagen (URL)</label>
+          <input {...register("imagen")} />
+          <p className="error">{errors.imagen?.message}</p>
         </div>
 
-        {/* tags */}
         <div className="form-group">
-          <label>Etiqueta (Tag):</label>
-          <select name="tag" value={form.tag} onChange={handleChange}>
-            <option value="">Ninguna</option>
-            <option value="Luminoso">Luminoso</option>
-            <option value="Super destacado">Super destacado</option>
-            <option value="Oportunidad">Oportunidad</option>
-          </select>
-        </div>
-
-        {/* Compra/Venta */}
-        <div className="form-group">
-          <label>Operación:</label>
-          <select
-            name="operation"
-            value={form.operation}
-            onChange={handleChange}
-            className={errors.operation ? "error-input" : ""}
-          >
+          <label>Operación</label>
+          <select {...register("operacion")}>
             <option value="">Seleccionar</option>
-            <option value="comprar">Comprar</option>
-            <option value="alquilar">Alquilar</option>
+            <option value="venta">Venta</option>
+            <option value="alquiler">Alquiler</option>
           </select>
-          {errors.operation && <p className="error">{errors.operation}</p>}
+          <p className="error">{errors.operacion?.message}</p>
         </div>
 
-        {/* Tipo de propiedad */}
         <div className="form-group">
-          <label>Tipo de propiedad:</label>
-          <select
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            className={errors.type ? "error-input" : ""}
-          >
+          <label>Tipo de Propiedad</label>
+          <select {...register("tipo")}>
             <option value="">Seleccionar</option>
             <option value="casa">Casa</option>
             <option value="departamento">Departamento</option>
-            <option value="comercial">Comercial</option>
+            <option value="comercial">Local comercial</option>
+            <option value="terreno">Terreno</option>
           </select>
-          {errors.type && <p className="error">{errors.type}</p>}
+          <p className="error">{errors.tipo?.message}</p>
         </div>
 
-        {/* Disponible */}
-        <div className="form-group">
-          <label>
-            <input
-              type="checkbox"
-              name="available"
-              checked={form.available}
-              onChange={handleChange}
-            />
-            Disponible
-          </label>
-        </div>
-        <div className="form-actions">
-          <button type="submit">Agregar propiedad</button>
-        </div>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Guardando..." : "Agregar Propiedad"}
+        </button>
       </form>
     </div>
   );
-}
+};
+
+export default AddProperty;

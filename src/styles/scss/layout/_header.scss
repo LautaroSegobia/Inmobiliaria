@@ -1,0 +1,26 @@
+
+@use "../abstracts/variables" as v;
+
+.header {
+  background-color: v.$primary-color;
+  padding: v.$spacing-md v.$spacing-lg;
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: v.$spacing-lg;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+
+    li a {
+      color: v.$light-color;
+      font-weight: 500;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: v.$secondary-color;
+      }
+    }
+  }
+}

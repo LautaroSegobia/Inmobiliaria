@@ -1,0 +1,53 @@
+
+@use "../abstracts/variables" as v;
+
+.page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: v.$spacing-lg;
+
+  h1 {
+    color: v.$primary-color;
+    margin-bottom: v.$spacing-md;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: v.$spacing-md;
+
+    label {
+      font-weight: 500;
+    }
+
+    input,
+    textarea {
+      padding: v.$input-padding;
+      border: v.$input-border-width solid v.$border-color;
+      border-radius: v.$input-border-radius;
+    }
+
+    .error-input {
+      border-color: v.$error-color;
+    }
+
+    .error {
+      font-size: 0.8rem;
+      color: v.$error-color;
+    }
+
+    button {
+      padding: v.$input-padding;
+      background: v.$primary-color;
+      color: v.$light-color;
+      border: none;
+      border-radius: v.$border-radius-sm;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        background: v.$primary-color-hover;
+      }
+    }
+  }
+}

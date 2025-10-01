@@ -1,11 +1,60 @@
 
+// Colores principales
 $primary-color: #0044cc;
+$primary-color-hover: #003bb3;
+$primary-color-disabled: #7da8f5;
+
 $secondary-color: #ff9900;
-$light-color: #f9f9f9;
-$dark-color: #333333;
+$secondary-color-hover: #e68a00;
 
-$font-stack: 'Roboto', Arial, sans-serif;
+$whatsapp-color: #25d366;
+$whatsapp-color-hover: #1ebe5d;
 
+// Escala de grises
+$gray-100: #f9f9f9;
+$gray-200: #f1f1f1;
+$gray-300: #e0e0e0;
+$gray-400: #cccccc;
+$gray-500: #999999;
+$gray-600: #666666;
+$gray-700: #444444;
+$gray-800: #333333;
+$gray-900: #111111;
+
+// Fondos y texto
 $background-color: #ffffff;
-$border-color: #dddddd;
-$text-color: #222222;
+$text-color: $gray-800;
+$light-color: $gray-100;
+$dark-color: $gray-800;
+
+// Estados
+$error-color: #e53935;
+$success-color: #4caf50;
+$warning-color: #ffb300;
+
+// Tipografía
+$font-family: 'Roboto', Arial, sans-serif;
+
+// Spacing
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+
+// Bordes
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+
+// Inputs
+$input-border-width: 1px;
+$input-border-radius: $border-radius-sm;
+$input-padding: 0.6rem 1rem;
+$input-background: #fff;
+$border-color: $gray-400;
+
+// Sombras
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);

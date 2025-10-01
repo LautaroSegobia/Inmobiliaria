@@ -10,6 +10,7 @@
 @use "./components/card";
 @use "./components/footer";
 @use "./components/forms";
+@use "./components/searchbar";
 
 @use "./layout/header";
 
@@ -22,7 +23,7 @@
 
 body {
   margin: 0;
-  font-family: $font-stack;
+  font-family: $font-family;
   background-color: $light-color;
   color: $dark-color;
 }

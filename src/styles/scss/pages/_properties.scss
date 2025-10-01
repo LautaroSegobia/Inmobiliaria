@@ -1,41 +1,45 @@
 
-@use "../abstracts/variables" as *;
+@use "../abstracts/variables" as v;
 
 .properties {
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 2rem;
-  padding: 2rem;
+  display: flex;
+  gap: v.$spacing-lg;
+  padding: v.$spacing-lg;
 
   &__filters {
-    background: $light-color;
-    padding: 1rem;
-    border-radius: 0.5rem;
+    flex: 1;
+    max-width: 250px;
+    background: v.$light-color;
+    padding: v.$spacing-md;
+    border-radius: v.$border-radius-md;
+    box-shadow: v.$shadow-sm;
 
     h3 {
-      margin-bottom: 1rem;
-      color: $dark-color;
+      margin-bottom: v.$spacing-md;
+      color: v.$primary-color;
     }
 
     label {
       display: block;
-      margin-top: 0.5rem;
-      font-size: 0.85rem;
+      margin-top: v.$spacing-sm;
+      font-weight: 500;
     }
 
     input {
       width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.4rem 0.6rem;
-      border: 1px solid #ccc;
-      border-radius: 0.3rem;
+      margin-top: v.$spacing-xs;
+      padding: v.$input-padding;
+      border: v.$input-border-width solid v.$border-color;
+      border-radius: v.$input-border-radius;
     }
   }
 
   &__results {
+    flex: 3;
+
     h2 {
-      margin-bottom: 1rem;
-      color: $primary-color;
+      margin-bottom: v.$spacing-md;
+      color: v.$dark-color;
     }
   }
 }

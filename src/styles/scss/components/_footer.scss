@@ -1,11 +1,11 @@
 
-@use "../abstracts/variables" as *;
+@use "../abstracts/variables" as v;
 
 .footer {
   text-align: center;
-  padding: 1rem;
-  background-color: $primary-color;
-  color: white;
+  padding: v.$spacing-md;
+  background-color: v.$primary-color;
+  color: v.$light-color;
   font-size: 0.9rem;
 
   p {

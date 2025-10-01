@@ -1,35 +1,33 @@
 
-@use "../abstracts/variables" as *;
+@use "../abstracts/variables" as v;
 
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: $primary-color;
+  padding: v.$spacing-md v.$spacing-lg;
+  background-color: v.$primary-color;
+  box-shadow: v.$shadow-sm;
 
-  &__brand {
-    display: flex;
-    align-items: center;
-
-    .navbar__logo {
-      height: 50px;
-      width: auto;
-    }
+  &__brand img {
+    height: 50px;
+    object-fit: contain;
   }
 
   &__links {
     list-style: none;
     display: flex;
-    gap: 1.5rem;
+    gap: v.$spacing-lg;
+    margin: 0;
+    padding: 0;
 
     li a {
-      color: white;
+      color: v.$light-color;
       font-weight: 500;
       transition: color 0.3s ease;
 
       &:hover {
-        color: $secondary-color;
+        color: v.$secondary-color;
       }
     }
   }

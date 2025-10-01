@@ -1,5 +1,5 @@
 
-@use "../abstracts/variables" as *;
+@use "../abstracts/variables" as v;
 
 * {
   margin: 0;
@@ -12,9 +12,9 @@ html, body {
 }
 
 body {
-  font-family: $font-stack;
-  background-color: $background-color;
-  color: $text-color;
+  font-family: v.$font-family;
+  background-color: v.$background-color;
+  color: v.$text-color;
   line-height: 1.6;
 }
 
