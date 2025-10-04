@@ -1,36 +1,26 @@
 
 @use "../abstracts/variables" as v;
+@use "../abstracts/mixins" as m;
 
 .searchbar {
   display: flex;
   flex-wrap: wrap;
-  gap: v.$spacing-sm;
+  gap: v.$spacing-md;
   padding: v.$spacing-md;
-  background: v.$light-color;
+  background: v.$gray-100;
   border-radius: v.$border-radius-md;
-  box-shadow: v.$shadow-sm;
+  @include m.card-shadow(0.1);
+  margin: v.$spacing-lg auto;
+  max-width: 1200px;
 
   input,
   select {
     flex: 1;
-    padding: v.$input-padding;
-    border: v.$input-border-width solid v.$border-color;
-    border-radius: v.$input-border-radius;
-    font-family: v.$font-family;
-    font-size: 0.9rem;
+    min-width: 180px;
+    @include m.input-style;
   }
 
   button {
-    padding: v.$input-padding;
-    background: v.$primary-color;
-    color: v.$light-color;
-    border: none;
-    border-radius: v.$border-radius-sm;
-    cursor: pointer;
-    font-weight: 500;
-
-    &:hover {
-      background: v.$primary-color-hover;
-    }
+    @include m.button(v.$secondary-color, v.$secondary-color-hover);
   }
 }

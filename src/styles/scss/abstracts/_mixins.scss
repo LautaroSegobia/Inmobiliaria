@@ -5,15 +5,16 @@
   background: $bg;
   color: $text-color;
   border: none;
-  padding: 0.9rem;
-  border-radius: 6px;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background 0.3s;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.3s, transform 0.2s;
 
   &:hover {
     background: $hover-bg;
+    transform: translateY(-2px);
   }
 
   &:disabled {
@@ -21,6 +22,7 @@
     cursor: not-allowed;
   }
 }
+
 
 @mixin input-style {
   width: 100%;

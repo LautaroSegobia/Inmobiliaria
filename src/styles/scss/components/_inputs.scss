@@ -1,0 +1,8 @@
+
+@use "../abstracts/mixins" as m;
+
+input,
+select,
+textarea {
+  @include m.input-style;
+}

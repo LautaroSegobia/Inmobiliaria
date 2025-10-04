@@ -1,70 +1,51 @@
 
 @use "../abstracts/variables" as v;
+@use "../abstracts/mixins" as m;
 
 .home {
   &__hero {
     background: v.$gray-100;
-    padding: v.$spacing-xl v.$spacing-lg;
+    padding: v.$spacing-xl;
     text-align: center;
+    border-radius: v.$border-radius-lg;
+    @include m.card-shadow(0.1);
+    max-width: 1000px;
+    margin: v.$spacing-xl auto;
+  }
 
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: v.$dark-color;
-      margin-bottom: v.$spacing-lg;
+  &__title {
+    font-size: 2.2rem;
+    margin-bottom: v.$spacing-lg;
+    color: v.$primary-color;
+    font-family: v.$font-family;
+  }
+
+  &__search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$spacing-md;
+    justify-content: center;
+  }
+
+  &__search-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+
+    label {
+      margin-bottom: v.$spacing-xs;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: v.$text-color;
+      text-align: left;
+    }
+
+    input, select {
+      @include m.input-style;
     }
   }
 
-  &__search {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: v.$spacing-md;
-
-    &-group {
-      display: flex;
-      flex-direction: column;
-      min-width: 180px;
-
-      label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: v.$gray-700;
-        margin-bottom: v.$spacing-xs;
-      }
-
-      input,
-      select {
-        padding: v.$input-padding;
-        border: v.$input-border-width solid v.$gray-400;
-        border-radius: v.$border-radius-md;
-        font-size: 0.95rem;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
-
-        &:focus {
-          border-color: v.$primary-color;
-          outline: none;
-          box-shadow: 0 0 6px rgba(0, 68, 204, 0.4);
-        }
-      }
-    }
-
-    button {
-      align-self: flex-end;
-      padding: v.$spacing-sm v.$spacing-md;
-      border: none;
-      border-radius: v.$border-radius-md;
-      background: v.$primary-color;
-      color: v.$light-color;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s ease, transform 0.2s ease;
-
-      &:hover {
-        background: v.$primary-color-hover;
-        transform: translateY(-2px);
-        box-shadow: v.$shadow-sm;
-      }
-    }
+  .btn--primary {
+    @include m.button(v.$primary-color, v.$primary-color-hover);
   }
 }

@@ -28,19 +28,26 @@ export default function PropertyDetail() {
       <div className="property-detail__image">
         <img src={property.image} alt={property.title} />
       </div>
+
       <div className="property-detail__content">
-        <h1>{property.title}</h1>
+        <h1 className="property-detail__title">{property.title}</h1>
         <p className="property-detail__location">{property.location}</p>
         <p className="property-detail__price">${property.price}</p>
+
         <p className="property-detail__description">{property.description}</p>
 
         <ul className="property-detail__features">
-          {property.rooms && <li>Ambientes: {property.rooms}</li>}
-          {property.bedrooms && <li>Dormitorios: {property.bedrooms}</li>}
-          {property.bathrooms && <li>Baños: {property.bathrooms}</li>}
-          {property.area && <li>Área: {property.area} m²</li>}
-          <li>{property.available ? "Disponible ✅" : "No disponible ❌"}</li>
+          {property.rooms && <li><strong>Ambientes:</strong> {property.rooms}</li>}
+          {property.bedrooms && <li><strong>Dormitorios:</strong> {property.bedrooms}</li>}
+          {property.bathrooms && <li><strong>Baños:</strong> {property.bathrooms}</li>}
+          {property.area && <li><strong>Área:</strong> {property.area} m²</li>}
+          <li><strong>Estado:</strong> {property.available ? "Disponible ✅" : "No disponible ❌"}</li>
         </ul>
+
+        <div className="property-detail__actions">
+          <button className="btn btn-primary">Contactar</button>
+          <button className="btn btn-secondary">Volver</button>
+        </div>
       </div>
     </div>
   );
