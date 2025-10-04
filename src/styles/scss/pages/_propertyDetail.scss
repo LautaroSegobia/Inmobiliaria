@@ -82,13 +82,17 @@
     }
 
     .btn-secondary {
-      @include m.button(v.$secondary-color, v.$secondary-color-hover);
+      @include m.button(v.$gray-600, v.$gray-700);
+      flex: 1;
+    }
+
+    .btn-whatsapp {
+      @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
       flex: 1;
     }
   }
 }
 
-// 📱 Responsive
 @media (max-width: 768px) {
   .property-detail {
     margin: v.$spacing-md;
