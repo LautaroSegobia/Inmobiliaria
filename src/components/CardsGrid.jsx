@@ -13,13 +13,14 @@ export default function CardsGrid({ properties = [] }) {
         <Card
           key={property.id}
           id={property.id}
-          title={property.title}
-          location={property.location}
-          price={property.price}
-          expenses={property.expenses}
-          image={property.image}
-          description={property.description}
-          tag={property.tag}
+          title={property.titulo}
+          location={property.ubicacion}
+          price={property.precio}
+          expenses={property.expensas}
+          currency={property.moneda}
+          image={property.imagen}
+          description={property.descripcionLarga}
+          tag={property.tipo}
         />
       ))}
     </div>

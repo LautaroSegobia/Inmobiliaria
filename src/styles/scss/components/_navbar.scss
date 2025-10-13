@@ -1,33 +1,92 @@
 
 @use "../abstracts/variables" as v;
+@use "../abstracts/mixins" as m;
 
 .navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: v.$spacing-md v.$spacing-lg;
-  background-color: v.$primary-color;
-  box-shadow: v.$shadow-sm;
+  background: v.$primary-color;
+  color: #fff;
+  padding: v.$spacing-sm 0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: v.$shadow-md;
 
-  &__brand img {
-    height: 50px;
-    object-fit: contain;
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 v.$spacing-md;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__logo {
+    height: 40px;
   }
 
   &__links {
-    list-style: none;
     display: flex;
+    list-style: none;
     gap: v.$spacing-lg;
-    margin: 0;
-    padding: 0;
 
     li a {
-      color: v.$light-color;
+      color: #fff;
+      font-size: v.$font-size-md;
       font-weight: 500;
-      transition: color 0.3s ease;
+      text-decoration: none;
+      transition: color 0.2s ease;
 
       &:hover {
         color: v.$secondary-color;
+      }
+    }
+  }
+
+  &__toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: v.$font-size-lg;
+    cursor: pointer;
+  }
+}
+
+/* 🔹 Responsive */
+@media (max-width: 992px) {
+  .navbar {
+    &__toggle {
+      display: block;
+    }
+
+    &__links {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: center;
+      background: v.$primary-color;
+      padding: v.$spacing-md 0;
+      gap: v.$spacing-md;
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+
+      &.active {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      li a {
+        font-size: v.$font-size-md;
+        color: #fff;
+
+        &:hover {
+          color: v.$secondary-color;
+        }
       }
     }
   }

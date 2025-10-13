@@ -3,110 +3,137 @@
 @use "../abstracts/mixins" as m;
 
 .property-detail {
-  max-width: 900px;
-  margin: v.$spacing-xl auto;
-  background: v.$background-color;
-  border-radius: v.$border-radius-md;
-  box-shadow: v.$shadow-md;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: v.$spacing-xl;
+  padding: v.$spacing-xl 0;
+  color: v.$text-color;
 
+  /* Imagen */
   &__image {
-    width: 100%;
-    height: 400px;
     img {
       width: 100%;
       height: 100%;
+      max-height: 500px;
+      border-radius: v.$border-radius-md;
       object-fit: cover;
-      display: block;
+      box-shadow: v.$shadow-md;
     }
   }
 
+  /* Contenido */
   &__content {
-    padding: v.$spacing-lg;
+    display: flex;
+    flex-direction: column;
+    gap: v.$spacing-md;
+
+    h1 {
+      font-size: v.$font-size-xxl;
+      font-weight: 700;
+      color: v.$primary-color;
+      margin-bottom: v.$spacing-xs;
+    }
+
+    .property-detail__location {
+      font-weight: 500;
+      color: v.$gray-700;
+    }
+
+    .property-detail__price {
+      font-size: v.$font-size-xl;
+      font-weight: 600;
+      color: v.$secondary-color;
+      margin-top: v.$spacing-xs;
+    }
+
+    .property-detail__description {
+      font-size: v.$font-size-md;
+      line-height: 1.6;
+      color: v.$gray-700;
+      margin-top: v.$spacing-sm;
+    }
   }
 
-  &__title {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: v.$primary-color;
-    margin-bottom: v.$spacing-sm;
-  }
-
-  &__location {
-    font-size: 1rem;
-    color: v.$gray-600;
-    margin-bottom: v.$spacing-sm;
-  }
-
-  &__price {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: v.$secondary-color;
-    margin-bottom: v.$spacing-md;
-  }
-
-  &__description {
-    margin-bottom: v.$spacing-md;
-    color: v.$text-color;
-    line-height: 1.5;
-  }
-
+  /* Características */
   &__features {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: v.$spacing-sm;
     list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: v.$spacing-sm;
+    margin-top: v.$spacing-md;
     padding: 0;
-    margin-bottom: v.$spacing-lg;
 
     li {
       background: v.$gray-100;
-      padding: v.$spacing-sm;
+      padding: v.$spacing-sm v.$spacing-md;
       border-radius: v.$border-radius-sm;
-      font-size: 0.95rem;
-      color: v.$dark-color;
+      box-shadow: v.$shadow-sm;
+      font-size: v.$font-size-sm;
+      color: v.$gray-800;
+    }
+  }
 
-      strong {
-        color: v.$primary-color;
+  /* Botones */
+  &__buttons {
+    display: flex;
+    gap: v.$spacing-md;
+    margin-top: v.$spacing-lg;
+    flex-wrap: wrap;
+
+    .btn {
+      @include m.button(v.$primary-color, v.$primary-color-hover);
+      min-width: 150px;
+      font-size: v.$font-size-md;
+      font-weight: 500;
+      border-radius: v.$border-radius-sm;
+
+      &.btn-whatsapp {
+        @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: v.$spacing-sm;
       }
     }
   }
 
-  &__actions {
-    display: flex;
-    gap: v.$spacing-md;
+  /* Responsive */
+  @media (max-width: 1024px) {
+    gap: v.$spacing-lg;
 
-    .btn-primary {
-      @include m.button(v.$primary-color, v.$primary-color-hover);
-      flex: 1;
-    }
-
-    .btn-secondary {
-      @include m.button(v.$gray-600, v.$gray-700);
-      flex: 1;
-    }
-
-    .btn-whatsapp {
-      @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
-      flex: 1;
+    &__image img {
+      max-height: 400px;
     }
   }
-}
 
-@media (max-width: 768px) {
-  .property-detail {
-    margin: v.$spacing-md;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: v.$spacing-lg;
 
-    &__image {
-      height: 250px;
+    &__image img {
+      max-height: 350px;
     }
+
+    &__buttons {
+      justify-content: center;
+    }
+
+    &__features {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding: v.$spacing-lg v.$spacing-md;
+    gap: v.$spacing-md;
 
     &__features {
       grid-template-columns: 1fr;
     }
 
-    &__actions {
-      flex-direction: column;
+    &__buttons .btn {
+      width: 100%;
     }
   }
 }

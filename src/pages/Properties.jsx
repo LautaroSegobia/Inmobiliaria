@@ -9,17 +9,17 @@ export default function Properties() {
 
   const [properties, setProperties] = useState([]);
   const [filters, setFilters] = useState({
-    bathrooms: "",
-    bedrooms: "",
-    rooms: "",
-    minPrice: "",
-    maxPrice: "",
+    banios: "",
+    dormitorios: "",
+    ambientes: "",
+    minPrecio: "",
+    maxPrecio: "",
   });
 
   const initialFilters = {
-    operation: params.get("operation") || "",
-    type: params.get("type") || "",
-    location: params.get("location") || "",
+    operacion: params.get("operacion") || "",
+    tipo: params.get("tipo") || "",
+    ubicacion: params.get("ubicacion") || "",
   };
 
   useEffect(() => {
@@ -30,15 +30,19 @@ export default function Properties() {
   }, []);
 
   const filteredProperties = properties.filter((p) => {
-    if (initialFilters.operation && p.operation !== initialFilters.operation) return false;
-    if (initialFilters.type && p.type !== initialFilters.type) return false;
-    if (initialFilters.location && !p.location.toLowerCase().includes(initialFilters.location.toLowerCase())) return false;
+    if (initialFilters.operacion && p.operacion !== initialFilters.operacion) return false;
+    if (initialFilters.tipo && p.tipo !== initialFilters.tipo) return false;
+    if (
+      initialFilters.ubicacion &&
+      !p.ubicacion.toLowerCase().includes(initialFilters.ubicacion.toLowerCase())
+    )
+      return false;
 
-    if (filters.bathrooms && Number(p.bathrooms) < Number(filters.bathrooms)) return false;
-    if (filters.bedrooms && Number(p.bedrooms) < Number(filters.bedrooms)) return false;
-    if (filters.rooms && Number(p.rooms) < Number(filters.rooms)) return false;
-    if (filters.minPrice && Number(p.price) < Number(filters.minPrice)) return false;
-    if (filters.maxPrice && Number(p.price) > Number(filters.maxPrice)) return false;
+    if (filters.banios && Number(p.banios) < Number(filters.banios)) return false;
+    if (filters.dormitorios && Number(p.dormitorios) < Number(filters.dormitorios)) return false;
+    if (filters.ambientes && Number(p.ambientes) < Number(filters.ambientes)) return false;
+    if (filters.minPrecio && Number(p.precio) < Number(filters.minPrecio)) return false;
+    if (filters.maxPrecio && Number(p.precio) > Number(filters.maxPrecio)) return false;
 
     return true;
   });
@@ -57,19 +61,39 @@ export default function Properties() {
         <h3>Filtrar</h3>
 
         <label>Baños (mín):</label>
-        <input type="number" name="bathrooms" value={filters.bathrooms} onChange={handleFilterChange} />
+        <input type="number" name="banios" value={filters.banios} onChange={handleFilterChange} />
 
         <label>Dormitorios (mín):</label>
-        <input type="number" name="bedrooms" value={filters.bedrooms} onChange={handleFilterChange} />
+        <input
+          type="number"
+          name="dormitorios"
+          value={filters.dormitorios}
+          onChange={handleFilterChange}
+        />
 
         <label>Ambientes (mín):</label>
-        <input type="number" name="rooms" value={filters.rooms} onChange={handleFilterChange} />
+        <input
+          type="number"
+          name="ambientes"
+          value={filters.ambientes}
+          onChange={handleFilterChange}
+        />
 
         <label>Precio mínimo:</label>
-        <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} />
+        <input
+          type="number"
+          name="minPrecio"
+          value={filters.minPrecio}
+          onChange={handleFilterChange}
+        />
 
         <label>Precio máximo:</label>
-        <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} />
+        <input
+          type="number"
+          name="maxPrecio"
+          value={filters.maxPrecio}
+          onChange={handleFilterChange}
+        />
       </aside>
 
       <section className="properties__results">
