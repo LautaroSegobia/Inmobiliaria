@@ -4,30 +4,90 @@
 
 .property-detail {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 420px;
   gap: v.$spacing-xl;
   padding: v.$spacing-xl 0;
   color: v.$text-color;
+  align-items: start;
 
-  // GALERÍA (corregido: sin recorte vertical)
+  // GALERÍA PRINCIPAL
   &__gallery {
-    .property-swiper {
+    display: flex;
+    flex-direction: column;
+    gap: v.$spacing-sm;
+    padding-right: v.$spacing-md;
+
+    .property-swiper,
+    .gallery-main {
+      width: 100%;
       border-radius: v.$border-radius-md;
       overflow: hidden;
       box-shadow: v.$shadow-md;
+      background: v.$gray-100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
+    // imagen principal
+    .gallery-main {
+      padding: 0.5rem;
       img {
         width: 100%;
         height: auto;
         aspect-ratio: 16 / 9;
-        object-fit: contain; // evita recorte
+        object-fit: cover;
+        border-radius: v.$border-radius-sm;
         cursor: zoom-in;
-        transition: transform 0.3s ease;
+        transition: transform 0.25s ease;
+        display: block;
+        max-height: 620px;
       }
+    }
 
-      img:hover {
-        transform: none;
+    // miniaturas
+    .gallery-thumbs {
+      display: flex;
+      gap: v.$spacing-sm;
+      align-items: center;
+      overflow-x: auto;
+      padding: v.$spacing-sm 0;
+
+      button.thumb {
+        flex: 0 0 auto;
+        width: 90px;
+        height: 60px;
+        border-radius: v.$border-radius-sm;
+        border: 1px solid v.$gray-300;
+        padding: 0;
+        background: transparent;
+        overflow: hidden;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        &.active {
+          box-shadow: 0 0 0 3px rgba(0, 38, 58, 0.08);
+          border-color: v.$primary-color;
+        }
       }
+    }
+
+    .swiper-slide img,
+    .swiper-slide .swiper-zoom-container img,
+    .swiper-zoom-container,
+    .swiper-zoom-target,
+    .swiper-slide-active img {
+      transform: none !important;
+      transition: none !important;
     }
   }
 
@@ -45,32 +105,45 @@
     align-self: start;
 
     h1 {
+      margin: 0;
       font-size: v.$font-size-xxl;
       color: v.$primary-color;
+      line-height: 1.05;
     }
 
     .property-detail__location {
+      margin-top: 0.25rem;
+      font-size: v.$font-size-sm;
+      color: v.$gray-700;
       font-weight: 500;
-      color: v.$gray-700;
     }
 
-    .property-detail__price {
-      font-size: v.$font-size-xl;
-      font-weight: 600;
-      color: v.$secondary-color;
-    }
+    .property-detail__meta {
+      display: flex;
+      gap: v.$spacing-md;
+      align-items: center;
+      margin-top: v.$spacing-sm;
 
-    .property-detail__description {
-      line-height: 1.6;
-      color: v.$gray-700;
+      .price {
+        font-size: v.$font-size-xl;
+        font-weight: 700;
+        color: v.$secondary-color;
+      }
+
+      .tag {
+        background: v.$gray-100;
+        padding: v.$spacing-xs v.$spacing-sm;
+        border-radius: v.$border-radius-sm;
+        font-size: v.$font-size-sm;
+      }
     }
 
     .property-detail__features {
       list-style: none;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: v.$spacing-sm;
-      margin-top: v.$spacing-md;
+      margin: v.$spacing-md 0;
       padding: 0;
 
       li {
@@ -82,39 +155,46 @@
       }
     }
 
+    .property-detail__description {
+      line-height: 1.6;
+      color: v.$gray-700;
+      font-size: v.$font-size-md;
+      margin-top: v.$spacing-sm;
+    }
+
     .property-detail__buttons {
       display: flex;
+      gap: v.$spacing-sm;
+      margin-top: v.$spacing-md;
       flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-start;
-      gap: v.$spacing-md;
-      margin-top: v.$spacing-lg;
 
       .btn {
         @include m.button(v.$primary-color, v.$primary-color-hover);
-        min-width: 150px;
+        display: inline-flex;
+        align-items: center;
+        gap: v.$spacing-sm;
       }
 
       .btn-whatsapp {
         @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: v.$spacing-sm;
-        font-weight: 600;
       }
     }
 
     .property-detail__map {
-      margin-top: v.$spacing-lg;
+      margin-top: v.$spacing-md;
 
       h3 {
-        margin-bottom: v.$spacing-sm;
+        margin: 0 0 v.$spacing-sm 0;
+        font-size: v.$font-size-sm;
         color: v.$primary-color;
       }
 
       iframe {
         width: 100%;
-        height: 300px;
+        height: 320px;
         border: none;
         border-radius: v.$border-radius-md;
         box-shadow: v.$shadow-md;
@@ -122,89 +202,127 @@
     }
   }
 
-  // MODAL IMAGEN
+  // MODAL
   .image-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    backdrop-filter: blur(4px);
 
     &__content {
       position: relative;
-      max-width: 90%;
-      max-height: 90%;
-      overflow: hidden;
+      max-width: 94%;
+      max-height: 94%;
+      width: min(1100px, 95%);
       border-radius: v.$border-radius-md;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
       box-shadow: v.$shadow-lg;
-
-      img {
-        width: 100%;
-        height: auto;
-        cursor: zoom-in;
-        transition: transform 0.3s ease;
-      }
     }
 
     &__close {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 12px;
+      right: 12px;
       background: v.$primary-color;
       color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
       border: none;
-      border-radius: 50%;
-      width: 35px;
-      height: 35px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: v.$shadow-md;
-      transition: background 0.3s;
+      z-index: 10;
+    }
 
-      &:hover {
-        background: v.$primary-color-hover;
+    &__img-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    &__img {
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 0.2s ease;
+      will-change: transform;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    &.is-zoomed {
+      .image-modal__img-wrap {
+        cursor: grabbing;
       }
     }
   }
 
-  // RESPONSIVE
+  .swiper-slide img,
+  .swiper-zoom-container,
+  .swiper-zoom-target,
+  .swiper-slide-active img {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  // Responsive
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 360px;
+  }
+
   @media (max-width: 992px) {
     grid-template-columns: 1fr;
-    gap: v.$spacing-lg;
-    padding: v.$spacing-lg;
-
+    &__gallery {
+      padding-right: 0;
+    }
     &__content {
       position: static;
+      top: auto;
     }
-
-    &__gallery img {
-      height: auto;
-      aspect-ratio: 16 / 9;
+    .image-modal & {
     }
   }
 
   @media (max-width: 600px) {
-    &__gallery img {
-      height: auto;
-      aspect-ratio: 16 / 9;
+    gap: v.$spacing-lg;
+
+    &__content {
+      padding: v.$spacing-md;
     }
 
-    &__buttons {
-      flex-direction: column;
+    &__gallery {
+      .gallery-main img {
+        aspect-ratio: 4 / 3;
+        max-height: 320px;
+      }
 
-      .btn,
-      .btn-whatsapp {
-        width: 100%;
+      .gallery-thumbs button.thumb {
+        width: 70px;
+        height: 50px;
       }
     }
 
-    &__features {
-      grid-template-columns: 1fr;
+    .image-modal {
+      &__content {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
     }
   }
 }
