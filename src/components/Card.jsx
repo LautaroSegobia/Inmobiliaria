@@ -18,11 +18,16 @@ export default function Card({
   description,
   tag,
 }) {
-  const formatPrice = (value, currency = "ARS") => {
+  // 🔧 CAMBIO: Se agregó validación de código de moneda inválido
+  const formatPrice = (value, currency) => {
     if (!value || isNaN(value)) return "$0";
+
+    // Validar código de moneda
+    const validCurrency = ["ARS", "USD"].includes(currency) ? currency : "ARS";
+
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
-      currency,
+      currency: validCurrency,
       minimumFractionDigits: 0,
     }).format(value);
   };

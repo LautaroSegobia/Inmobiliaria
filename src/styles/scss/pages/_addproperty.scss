@@ -5,48 +5,67 @@
 .add-property {
   max-width: 900px;
   margin: 3rem auto;
-  padding: 2rem;
+  padding: 2rem 3rem;
   background: v.$background-color;
   border-radius: v.$border-radius-lg;
-  @include m.card-shadow(0.12);
+  box-shadow: v.$shadow-md;
+  color: v.$text-color;
+  font-family: v.$font-family;
+  transition: all 0.3s ease;
 
   h2 {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: v.$spacing-lg;
     color: v.$primary-color;
+    font-size: v.$font-size-xl;
+    font-weight: 700;
   }
 
   form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: v.$spacing-md;
   }
 
   .form-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: v.$spacing-md;
 
     .form-group {
       flex: 1;
-      min-width: 220px;
+      min-width: 240px;
     }
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
+    position: relative;
 
     label {
       font-weight: 600;
-      margin-bottom: 0.3rem;
-      color: v.$text-color;
+      margin-bottom: 0.4rem;
+      color: v.$gray-700;
     }
 
     input,
     textarea,
     select {
-      @include m.input-style;
+      width: 100%;
+      padding: v.$input-padding;
+      border: v.$input-border-width solid v.$border-color;
+      border-radius: v.$input-border-radius;
+      background: v.$input-background;
+      color: v.$text-color;
+      font-size: v.$font-size-md;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus {
+        border-color: v.$primary-color;
+        box-shadow: 0 0 0 2px rgba(v.$primary-color, 0.15);
+        outline: none;
+      }
     }
 
     textarea {
@@ -57,39 +76,123 @@
     &.checkbox {
       flex-direction: row;
       align-items: center;
+      gap: 0.5rem;
 
       input {
         width: auto;
-        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+
+      label {
+        margin-bottom: 0;
       }
     }
 
     .error {
       color: v.$error-color;
-      font-size: 0.85rem;
+      font-size: v.$font-size-sm;
       margin-top: 0.2rem;
     }
   }
 
+  fieldset {
+    border: 1px solid v.$gray-300;
+    border-radius: v.$border-radius-sm;
+    padding: v.$spacing-md;
+    margin-top: v.$spacing-md;
+
+    legend {
+      font-weight: 600;
+      color: v.$primary-color;
+      padding: 0 0.5rem;
+    }
+  }
+
   button {
-    @include m.button(v.$primary-color, v.$primary-color-hover);
-    align-self: center;
-    margin-top: 1.5rem;
+    background: v.$primary-color;
+    color: v.$light-color;
+    font-weight: 600;
+    font-size: v.$font-size-md;
     padding: 1rem 2rem;
+    border: none;
+    border-radius: v.$border-radius-md;
+    cursor: pointer;
+    align-self: center;
+    margin-top: v.$spacing-lg;
+    transition: background 0.2s ease, transform 0.1s ease;
+
+    &:hover {
+      background: v.$primary-color-hover;
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // 📸 Galería de previews
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: v.$spacing-sm;
+    margin-top: v.$spacing-md;
+    margin-bottom: v.$spacing-md;
+
+    img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: v.$border-radius-sm;
+      box-shadow: v.$shadow-sm;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
   }
 }
 
-// 📱 Responsive
+/* 📱 Responsive */
+@media (max-width: 992px) {
+  .add-property {
+    padding: 2rem;
+
+    h2 {
+      font-size: v.$font-size-lg;
+    }
+
+    .form-row {
+      gap: v.$spacing-sm;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .add-property {
-    padding: v.$spacing-lg;
+    padding: 1.5rem;
 
-    form {
-      grid-template-columns: 1fr;
+    .form-row {
+      flex-direction: column;
+    }
 
-      button {
-        width: 100%;
-      }
+    button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .add-property {
+    padding: 1rem;
+
+    h2 {
+      font-size: v.$font-size-md;
+    }
+
+    .preview-grid {
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     }
   }
 }

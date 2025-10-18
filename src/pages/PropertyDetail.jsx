@@ -14,44 +14,34 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Modal + Zoom
   const [selectedImage, setSelectedImage] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const positionRef = useRef({ x: 0, y: 0 });
-  const pointerStartRef = useRef(null);
-  const isDraggingRef = useRef(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const startRef = useRef({ x: 0, y: 0 });
+  const originRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    let mounted = true;
     const fetchProperty = async () => {
       try {
         const res = await fetch(`https://68cca15b716562cf5077f884.mockapi.io/properties/${id}`);
         if (!res.ok) throw new Error("Error al cargar");
         const data = await res.json();
-        if (!mounted) return;
         setProperty(data);
         const imgs = data.imagenes && data.imagenes.length ? data.imagenes : [data.imagen];
         setSelectedImage(imgs[0] || FALLBACK_IMAGE);
       } catch (err) {
         console.error(err);
-        if (mounted) setError(true);
+        setError(true);
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
     fetchProperty();
-    return () => (mounted = false);
   }, [id]);
-
-  useEffect(() => {
-    if (!modalOpen) {
-      setZoom(1);
-      positionRef.current = { x: 0, y: 0 };
-    }
-  }, [modalOpen]);
-
-  if (loading) return <div className="loading">Cargando...</div>;
-  if (error || !property) return <div className="error">Propiedad no encontrada</div>;
 
   const handleWhatsApp = () => {
     const mensaje = `Hola! Estoy interesado en la propiedad "${property.titulo}" ubicada en ${property.direccion || property.ubicacion}.`;
@@ -67,49 +57,73 @@ export default function PropertyDetail() {
   const openModal = (img) => {
     setSelectedImage(img);
     setModalOpen(true);
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
   };
-  const closeModal = () => setModalOpen(false);
-  const toggleZoom = () => setZoom((z) => (z === 1 ? 2 : 1));
 
-  const onPointerDown = (e) => {
+  const handleCloseModal = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setModalOpen(false);
+      setIsClosing(false);
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
+    }, 250);
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    setZoom((prev) => {
+      const newZoom = Math.min(Math.max(prev + e.deltaY * -0.0015, 1), 4);
+      return newZoom;
+    });
+  };
+
+  const handleMouseDown = (e) => {
     if (zoom === 1) return;
-    isDraggingRef.current = true;
-    pointerStartRef.current = { x: e.clientX, y: e.clientY, originX: positionRef.current.x, originY: positionRef.current.y };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    startRef.current = { x: e.clientX, y: e.clientY };
+    originRef.current = { ...position };
   };
-  const onPointerMove = (e) => {
-    if (!isDraggingRef.current || zoom === 1) return;
-    const start = pointerStartRef.current;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    positionRef.current = { x: start.originX + dx, y: start.originY + dy };
-    setZoom((z) => z);
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || zoom === 1) return;
+    const dx = e.clientX - startRef.current.x;
+    const dy = e.clientY - startRef.current.y;
+    setPosition({
+      x: originRef.current.x + dx,
+      y: originRef.current.y + dy,
+    });
   };
-  const onPointerUp = (e) => {
-    if (isDraggingRef.current) {
-      isDraggingRef.current = false;
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch (_) {}
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleImageClick = () => {
+    if (zoom === 1) {
+      setZoom(2);
+    } else {
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
     }
   };
 
-  const modalImageStyle = () => {
-    const { x, y } = positionRef.current;
-    return {
-      transform: `translate(${x}px, ${y}px) scale(${zoom})`,
-      cursor: zoom > 1 ? (isDraggingRef.current ? "grabbing" : "grab") : "zoom-in",
-    };
-  };
+  const images = property?.imagenes?.length ? property.imagenes : [property?.imagen || FALLBACK_IMAGE];
 
-  const images = property.imagenes && property.imagenes.length ? property.imagenes : [property.imagen || FALLBACK_IMAGE];
+  if (loading) return <div className="loading">Cargando...</div>;
+  if (error || !property) return <div className="error">Propiedad no encontrada</div>;
 
   return (
     <main className="property-detail container">
+      {/* GALERÍA */}
       <section className="property-detail__gallery">
         <div className="gallery-main" onClick={() => openModal(selectedImage)}>
-          <img src={selectedImage || FALLBACK_IMAGE} alt={property.titulo} onError={(e) => (e.target.src = FALLBACK_IMAGE)} />
+          <img
+            src={selectedImage || FALLBACK_IMAGE}
+            alt={property.titulo}
+            onError={(e) => (e.target.src = FALLBACK_IMAGE)}
+          />
         </div>
+
         <div className="gallery-thumbs">
           {images.map((img, idx) => (
             <button
@@ -117,17 +131,23 @@ export default function PropertyDetail() {
               className={`thumb ${selectedImage === img ? "active" : ""}`}
               onClick={() => setSelectedImage(img)}
             >
-              <img src={img || FALLBACK_IMAGE} alt={`Imagen ${idx + 1}`} onError={(e) => (e.target.src = FALLBACK_IMAGE)} />
+              <img
+                src={img || FALLBACK_IMAGE}
+                alt={`Imagen ${idx + 1}`}
+                onError={(e) => (e.target.src = FALLBACK_IMAGE)}
+              />
             </button>
           ))}
         </div>
       </section>
 
+      {/* INFO */}
       <aside className="property-detail__content">
         <h1>{property.titulo}</h1>
         <p className="location">{property.direccion || property.ubicacion}</p>
         <p className="price">
-          {property.moneda ? property.moneda + " " : ""}{Number(property.precio || 0).toLocaleString("es-AR")}
+          {property.moneda ? property.moneda + " " : ""}
+          {Number(property.precio || 0).toLocaleString("es-AR")}
         </p>
 
         <div className="actions">
@@ -164,26 +184,38 @@ export default function PropertyDetail() {
         <p>{property.descripcionLarga || property.descripcion || "Sin descripción"}</p>
       </section>
 
+      {/* MODAL CON ZOOM + ARRASTRE + ANIMACIÓN */}
       {modalOpen && (
-        <div className="image-modal" onClick={closeModal}>
-          <div className="image-modal__content" onClick={(e) => e.stopPropagation()}>
-            <button className="image-modal__close" onClick={closeModal}>
+        <div
+          className={`image-modal ${isClosing ? "closing" : ""}`}
+          onClick={handleCloseModal}
+        >
+          <div
+            className="image-modal__content"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ cursor: isDragging ? "grabbing" : zoom > 1 ? "grab" : "zoom-in" }}
+          >
+            <button className="image-modal__close" onClick={handleCloseModal}>
               <FontAwesomeIcon icon={faXmark} />
             </button>
-            <div
-              className="image-modal__viewport"
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-            >
-              <img
-                src={selectedImage || FALLBACK_IMAGE}
-                alt="Ampliada"
-                style={modalImageStyle()}
-                onClick={toggleZoom}
-                draggable={false}
-              />
-            </div>
+            <img
+              src={selectedImage || FALLBACK_IMAGE}
+              alt="Vista ampliada"
+              draggable={false}
+              onClick={handleImageClick}
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                transition: isDragging ? "none" : "transform 0.25s ease-out",
+                maxWidth: "100%",
+                maxHeight: "90vh",
+                userSelect: "none",
+              }}
+            />
           </div>
         </div>
       )}
