@@ -2,345 +2,253 @@
 @use "../abstracts/variables" as v;
 @use "../abstracts/mixins" as m;
 
-/* ANIMACIÓN DEL MODAL */
-@keyframes fadeZoomIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 .property-detail {
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: v.$spacing-xl;
+  width: 100%;
   padding: v.$spacing-xl 0;
-  color: v.$text-color;
-  align-items: start;
 
-  /* === GALERÍA PRINCIPAL === */
+  &__grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: v.$spacing-xl;
+    background-color: v.$background-color;
+    border-radius: v.$border-radius-md;
+    padding: v.$spacing-lg;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+      padding: v.$spacing-md;
+    }
+  }
+
+  // === IZQUIERDA (galería + descripción) ===
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: v.$spacing-lg;
+  }
+
+  // === GALERÍA ===
   &__gallery {
     display: flex;
     flex-direction: column;
-    gap: v.$spacing-sm;
-    padding-right: v.$spacing-md;
-
-    .gallery-main,
-    .property-swiper {
-      width: 100%;
-      border-radius: v.$border-radius-md;
-      overflow: hidden;
-      box-shadow: v.$shadow-md;
-      background: v.$gray-100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    gap: v.$spacing-md;
 
     .gallery-main {
-      padding: 0.5rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: v.$border-radius-md;
+      box-shadow: v.$shadow-md;
+      cursor: zoom-in;
 
       img {
         width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
+        max-height: 480px;
         object-fit: cover;
-        border-radius: v.$border-radius-sm;
-        cursor: zoom-in;
-        transition: transform 0.25s ease;
         display: block;
-        max-height: 620px;
+        border-radius: v.$border-radius-md;
+
+        @media (max-width: 768px) {
+          max-height: 320px;
+        }
       }
     }
 
     .gallery-thumbs {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       gap: v.$spacing-sm;
-      align-items: center;
-      overflow-x: auto;
-      padding: v.$spacing-sm 0;
 
       .thumb {
-        flex: 0 0 auto;
-        width: 90px;
-        height: 60px;
-        border-radius: v.$border-radius-sm;
-        border: 1px solid v.$gray-300;
-        padding: 0;
+        border: none;
         background: transparent;
-        overflow: hidden;
         cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        padding: 0;
+        border-radius: v.$border-radius-sm;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
 
         img {
           width: 100%;
-          height: 100%;
+          height: 80px;
           object-fit: cover;
-          display: block;
+          border-radius: v.$border-radius-sm;
+        }
+
+        &:hover {
+          transform: scale(1.03);
+          box-shadow: v.$shadow-md;
         }
 
         &.active {
-          border-color: v.$primary-color;
-          box-shadow: 0 0 0 3px rgba(0, 38, 58, 0.1);
+          outline: 2px solid v.$primary-color;
         }
       }
     }
   }
 
-  /* === CONTENIDO === */
+  // === DESCRIPCIÓN ===
+  &__description {
+    background-color: v.$gray-100;
+    padding: v.$spacing-md;
+    border-radius: v.$border-radius-md;
+    box-shadow: v.$shadow-sm;
+    word-break: break-word;
+    width: 100%;
+
+    h3 {
+      color: v.$primary-color;
+      margin-bottom: v.$spacing-sm;
+    }
+
+    p {
+      font-size: v.$font-size-sm;
+      color: v.$gray-700;
+      line-height: 1.6;
+    }
+  }
+
+  // === DERECHA (info + mapa) ===
   &__content {
     display: flex;
     flex-direction: column;
     gap: v.$spacing-md;
-    background-color: v.$background-color;
-    padding: v.$spacing-lg;
-    border-radius: v.$border-radius-md;
-    box-shadow: v.$shadow-md;
-    position: sticky;
-    top: v.$spacing-lg;
     align-self: start;
 
     h1 {
-      margin: 0;
-      font-size: v.$font-size-xxl;
+      font-size: v.$font-size-xl;
       color: v.$primary-color;
-      line-height: 1.05;
+      margin-bottom: v.$spacing-xs;
     }
 
-    .property-detail__location {
-      margin-top: 0.25rem;
+    .location {
+      color: v.$gray-600;
       font-size: v.$font-size-sm;
-      color: v.$gray-700;
-      font-weight: 500;
     }
 
-    .property-detail__meta {
-      display: flex;
-      gap: v.$spacing-md;
-      align-items: center;
-      margin-top: v.$spacing-sm;
-
-      .price {
-        font-size: v.$font-size-xl;
-        font-weight: 700;
-        color: v.$secondary-color;
-      }
-
-      .tag {
-        background: v.$gray-100;
-        padding: v.$spacing-xs v.$spacing-sm;
-        border-radius: v.$border-radius-sm;
-        font-size: v.$font-size-sm;
-      }
+    .price {
+      font-size: v.$font-size-lg;
+      color: v.$secondary-color;
+      font-weight: bold;
+      margin-bottom: v.$spacing-sm;
     }
 
-    .property-detail__features {
-      list-style: none;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: v.$spacing-sm;
-      margin: v.$spacing-md 0;
-      padding: 0;
-
-      li {
-        background: v.$gray-100;
-        padding: v.$spacing-sm v.$spacing-md;
-        border-radius: v.$border-radius-sm;
-        box-shadow: v.$shadow-sm;
-        font-size: v.$font-size-sm;
-      }
-    }
-
-    .property-detail__description {
-      line-height: 1.6;
-      color: v.$gray-700;
-      font-size: v.$font-size-md;
-      margin-top: v.$spacing-sm;
-    }
-
-    .property-detail__buttons {
+    .actions {
       display: flex;
       gap: v.$spacing-sm;
-      margin-top: v.$spacing-md;
-      flex-wrap: wrap;
+      margin-bottom: v.$spacing-sm;
 
       .btn {
-        @include m.button(v.$primary-color, v.$primary-color-hover);
-        display: inline-flex;
+        @include m.button(v.$secondary-color, v.$secondary-color-hover);
+        display: flex;
         align-items: center;
-        gap: v.$spacing-sm;
+        gap: v.$spacing-xs;
+        font-size: v.$font-size-sm;
+
+        &--whatsapp {
+          @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
+        }
+      }
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: v.$spacing-xs v.$spacing-md;
+      list-style: none;
+      padding: 0;
+      margin-bottom: v.$spacing-md;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
       }
 
-      .btn-whatsapp {
-        @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
-        display: inline-flex;
-        align-items: center;
-        gap: v.$spacing-sm;
+      li {
+        font-size: v.$font-size-sm;
+        color: v.$text-color;
+        border-bottom: 1px solid v.$gray-200;
+        padding-bottom: v.$spacing-xs;
+        display: flex;
+        justify-content: space-between;
+
+        strong {
+          color: v.$primary-color;
+          font-weight: 600;
+        }
       }
     }
 
     .property-detail__map {
       margin-top: v.$spacing-md;
 
-      h3 {
-        margin: 0 0 v.$spacing-sm 0;
-        font-size: v.$font-size-sm;
+      h4 {
         color: v.$primary-color;
+        font-size: v.$font-size-md;
+        margin-bottom: v.$spacing-xs;
+      }
+
+      p {
+        font-size: v.$font-size-sm;
+        color: v.$gray-600;
+        margin-bottom: v.$spacing-sm;
       }
 
       iframe {
         width: 100%;
-        height: 320px;
+        height: 300px;
         border: none;
         border-radius: v.$border-radius-md;
-        box-shadow: v.$shadow-md;
+        box-shadow: v.$shadow-sm;
       }
     }
   }
 
-  /* === MODAL con zoom + animación === */
+  // === MODAL ===
   .image-modal {
     position: fixed;
     inset: 0;
-    background-color: rgba(v.$gray-900, 0.85);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 9999;
-    padding: v.$spacing-md;
-    animation: fadeZoomIn 0.25s ease-out;
+    cursor: zoom-out;
 
     &__content {
       position: relative;
-      background-color: v.$background-color;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: hidden;
       border-radius: v.$border-radius-md;
       box-shadow: v.$shadow-lg;
-      max-width: 90vw;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
       max-height: 90vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: grab;
-      transition: background 0.3s ease;
+      user-select: none;
     }
 
     &__close {
       position: absolute;
       top: v.$spacing-sm;
       right: v.$spacing-sm;
-      background: v.$secondary-color;
-      color: v.$background-color;
+      background: rgba(255, 255, 255, 0.9);
       border: none;
       border-radius: 50%;
-      width: 2.5rem;
-      height: 2.5rem;
-      font-size: v.$font-size-md;
+      width: 36px;
+      height: 36px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: v.$shadow-md;
-      transition: background 0.3s ease, transform 0.2s ease;
+      color: v.$primary-color;
+      box-shadow: v.$shadow-sm;
+      transition: background 0.3s ease;
 
       &:hover {
-        background: v.$secondary-color-hover;
-        transform: translateY(-1px);
-      }
-    }
-
-    /* Imagen con zoom + arrastre */
-    img {
-      max-width: 100%;
-      max-height: 100%;
-      user-select: none;
-      -webkit-user-drag: none;
-      transition: transform 0.2s ease-out;
-      will-change: transform;
-      cursor: zoom-in;
-      border-radius: v.$border-radius-sm;
-
-      &.is-dragging {
-        cursor: grabbing;
-      }
-    }
-
-    &.is-zoomed .image-modal__content {
-      cursor: grabbing;
-    }
-
-    /* Fondo suave al hacer zoom */
-    &.is-zoomed {
-      background-color: rgba(v.$gray-900, 0.95);
-    }
-
-    @media (max-width: 768px) {
-      padding: 0;
-
-      &__content {
-        width: 100%;
-        height: 100%;
-        border-radius: 0;
+        background: v.$gray-200;
       }
     }
   }
-
-  /* === RESPONSIVE === */
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 360px;
-  }
-
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
-
-    &__gallery {
-      padding-right: 0;
-    }
-
-    &__content {
-      position: static;
-      top: auto;
-    }
-  }
-
-  @media (max-width: 600px) {
-    gap: v.$spacing-lg;
-
-    &__content {
-      padding: v.$spacing-md;
-    }
-
-    &__gallery {
-      .gallery-main img {
-        aspect-ratio: 4 / 3;
-        max-height: 320px;
-      }
-
-      .gallery-thumbs .thumb {
-        width: 70px;
-        height: 50px;
-      }
-    }
-
-    .image-modal__content {
-      width: 100%;
-      height: 100%;
-      border-radius: 0;
-    }
-  }
-}
-
-/* ESTADOS GENERALES */
-.loading,
-.error {
-  text-align: center;
-  margin-top: v.$spacing-xl;
-  color: v.$gray-700;
 }

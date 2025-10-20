@@ -114,77 +114,89 @@ export default function PropertyDetail() {
 
   return (
     <main className="property-detail container">
-      {/* GALERÍA */}
-      <section className="property-detail__gallery">
-        <div className="gallery-main" onClick={() => openModal(selectedImage)}>
-          <img
-            src={selectedImage || FALLBACK_IMAGE}
-            alt={property.titulo}
-            onError={(e) => (e.target.src = FALLBACK_IMAGE)}
-          />
-        </div>
-
-        <div className="gallery-thumbs">
-          {images.map((img, idx) => (
-            <button
-              key={idx}
-              className={`thumb ${selectedImage === img ? "active" : ""}`}
-              onClick={() => setSelectedImage(img)}
-            >
+      <div className="property-detail__grid">
+        {/* IZQUIERDA: Galería + Descripción */}
+        <div className="property-detail__left">
+          {/* GALERÍA */}
+          <section className="property-detail__gallery">
+            <div className="gallery-main" onClick={() => openModal(selectedImage)}>
               <img
-                src={img || FALLBACK_IMAGE}
-                alt={`Imagen ${idx + 1}`}
+                src={selectedImage || FALLBACK_IMAGE}
+                alt={property.titulo}
                 onError={(e) => (e.target.src = FALLBACK_IMAGE)}
               />
+            </div>
+
+            <div className="gallery-thumbs">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  className={`thumb ${selectedImage === img ? "active" : ""}`}
+                  onClick={() => setSelectedImage(img)}
+                >
+                  <img
+                    src={img || FALLBACK_IMAGE}
+                    alt={`Imagen ${idx + 1}`}
+                    onError={(e) => (e.target.src = FALLBACK_IMAGE)}
+                  />
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* DESCRIPCIÓN */}
+          <section className="property-detail__description">
+            <h3>Descripción</h3>
+            <p>{property.descripcionLarga || property.descripcion || "Sin descripción disponible."}</p>
+          </section>
+        </div>
+
+        {/* DERECHA: Info + Mapa */}
+        <aside className="property-detail__content">
+          <h1>{property.titulo}</h1>
+          <p className="location">{property.direccion || property.ubicacion}</p>
+          <p className="price">
+            {property.moneda ? property.moneda + " " : ""}
+            {Number(property.precio || 0).toLocaleString("es-AR")}
+          </p>
+
+          <div className="actions">
+            <button className="btn btn--whatsapp" onClick={handleWhatsApp}>
+              <FontAwesomeIcon icon={faWhatsapp} /> WhatsApp
             </button>
-          ))}
-        </div>
-      </section>
+            <button className="btn btn--mail" onClick={handleEmail}>
+              <FontAwesomeIcon icon={faEnvelope} /> Mail
+            </button>
+          </div>
 
-      {/* INFO */}
-      <aside className="property-detail__content">
-        <h1>{property.titulo}</h1>
-        <p className="location">{property.direccion || property.ubicacion}</p>
-        <p className="price">
-          {property.moneda ? property.moneda + " " : ""}
-          {Number(property.precio || 0).toLocaleString("es-AR")}
-        </p>
+          <ul className="features">
+            <li><strong>Tipo:</strong> {property.tipo}</li>
+            <li><strong>Operación:</strong> {property.operacion}</li>
+            <li><strong>Ambientes:</strong> {property.ambientes}</li>
+            <li><strong>Dormitorios:</strong> {property.dormitorios}</li>
+            <li><strong>Baños:</strong> {property.banios}</li>
+            <li><strong>Superficie:</strong> {property.areaTotal} m²</li>
+          </ul>
 
-        <div className="actions">
-          <button className="btn btn--whatsapp" onClick={handleWhatsApp}>
-            <FontAwesomeIcon icon={faWhatsapp} /> WhatsApp
-          </button>
-          <button className="btn btn--mail" onClick={handleEmail}>
-            <FontAwesomeIcon icon={faEnvelope} /> Mail
-          </button>
-        </div>
+          <div className="property-detail__map">
+            <h4>Ubicación</h4>
+            <p>{property.direccion || property.ubicacion}</p>
+            <iframe
+              title="mapa"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(property.direccion || property.ubicacion || "")}&output=embed`}
+              loading="lazy"
+              style={{
+                width: "100%",
+                height: "300px",
+                border: "none",
+                borderRadius: "12px",
+              }}
+            />
+          </div>
+        </aside>
+      </div>
 
-        <ul className="features">
-          <li><strong>Tipo:</strong> {property.tipo}</li>
-          <li><strong>Operación:</strong> {property.operacion}</li>
-          <li><strong>Ambientes:</strong> {property.ambientes}</li>
-          <li><strong>Dormitorios:</strong> {property.dormitorios}</li>
-          <li><strong>Baños:</strong> {property.banios}</li>
-          <li><strong>Superficie:</strong> {property.areaTotal} m²</li>
-        </ul>
-
-        <div className="property-detail__map">
-          <h4>Ubicación</h4>
-          <p>{property.direccion || property.ubicacion}</p>
-          <iframe
-            title="mapa"
-            src={`https://www.google.com/maps?q=${encodeURIComponent(property.direccion || property.ubicacion || "")}&output=embed`}
-            loading="lazy"
-          />
-        </div>
-      </aside>
-
-      <section className="property-detail__description">
-        <h3>Descripción</h3>
-        <p>{property.descripcionLarga || property.descripcion || "Sin descripción"}</p>
-      </section>
-
-      {/* MODAL CON ZOOM + ARRASTRE + ANIMACIÓN */}
+      {/* MODAL CON ZOOM + ARRASTRE */}
       {modalOpen && (
         <div
           className={`image-modal ${isClosing ? "closing" : ""}`}
