@@ -17,6 +17,7 @@
     @include m.card-shadow(0.25);
   }
 
+  /* === Imagen + Slider === */
   &__image {
     flex: 0 0 320px;
     position: relative;
@@ -27,13 +28,56 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.4s ease;
     }
 
     &:hover img {
       transform: scale(1.05);
     }
 
+    /* Controles del slider */
+    .card__image-controls {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      padding: 0 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+
+      .card__nav-btn {
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        cursor: pointer;
+        pointer-events: all;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.7);
+        }
+
+        svg {
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    &:hover .card__image-controls {
+      opacity: 1;
+    }
+
+    /* Etiqueta tipo */
     .card__tag {
       position: absolute;
       bottom: 10px;
@@ -48,6 +92,7 @@
     }
   }
 
+  /* === Contenido === */
   &__content {
     flex: 1;
     padding: v.$spacing-lg;
@@ -79,10 +124,12 @@
       margin-bottom: 0.25rem;
     }
 
+    /* Dirección completa */
     .card__location {
       font-size: v.$font-size-sm;
       color: v.$gray-600;
       margin-bottom: 0.5rem;
+      font-style: italic;
     }
 
     .card__description {
@@ -92,6 +139,7 @@
     }
   }
 
+  /* === Botones === */
   &__actions {
     display: flex;
     gap: v.$spacing-sm;
@@ -117,7 +165,7 @@
   }
 }
 
-/* Responsive */
+/* === Responsive === */
 @media (max-width: 992px) {
   .card {
     flex-direction: column;
@@ -125,6 +173,10 @@
     &__image {
       width: 100%;
       height: 240px;
+    }
+
+    &__content {
+      padding: v.$spacing-md;
     }
   }
 }

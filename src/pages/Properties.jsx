@@ -19,7 +19,7 @@ export default function Properties() {
   const initialFilters = {
     operacion: params.get("operacion") || "",
     tipo: params.get("tipo") || "",
-    ubicacion: params.get("ubicacion") || "",
+    zona: params.get("ubicacion") || "",
   };
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -12,6 +12,7 @@ const MOCKAPI_ENDPOINT = "properties";
 const CLOUD_NAME = "dcnd6bmzb";
 const UPLOAD_PRESET = "propiedades_unsigned";
 
+/* Validaciones (yup) */
 const schema = yup.object().shape({
   titulo: yup.string().required("El título es obligatorio").min(3),
   descripcionCorta: yup.string().required("La descripción corta es obligatoria").min(10),
@@ -20,9 +21,9 @@ const schema = yup.object().shape({
   moneda: yup.string().required("Selecciona una moneda"),
   expensas: yup.number().typeError("Debe ser un número").min(0).required(),
   monedaExpensas: yup.string().required("Selecciona una moneda"),
-  areaCubierta: yup.number().typeError("Debe ser un número").min(0).required(),
-  areaDescubierta: yup.number().typeError("Debe ser un número").min(0).required(),
-  areaTotal: yup.number().typeError("Debe ser un número").min(0).required(),
+  metrosCubiertos: yup.number().typeError("Debe ser un número").min(0).required(),
+  metrosDescubiertos: yup.number().typeError("Debe ser un número").min(0).required(),
+  metrosTotales: yup.number().typeError("Debe ser un número").min(0).required(),
   cochera: yup.boolean(),
   dormitorios: yup.number().typeError("Debe ser un número").min(0).required(),
   banios: yup.number().typeError("Debe ser un número").min(0).required(),
@@ -47,21 +48,21 @@ export default function AddProperty() {
       descripcionCorta: "",
       descripcionLarga: "",
       precio: "",
-      moneda: "",
-      expensas: "",
-      monedaExpensas: "",
-      areaCubierta: "",
-      areaDescubierta: "",
-      areaTotal: "",
+      moneda: "ARS",
+      expensas: 0,
+      monedaExpensas: "ARS",
+      metrosCubiertos: 0,
+      metrosDescubiertos: 0,
+      metrosTotales: 0,
       cochera: false,
-      dormitorios: "",
-      banios: "",
-      ambientes: "",
-      piso: "",
+      dormitorios: 0,
+      banios: 0,
+      ambientes: 1,
+      piso: 0,
       balcon: false,
-      antiguedad: "",
-      operacion: "",
-      tipo: "",
+      antiguedad: 0,
+      operacion: "venta",
+      tipo: "departamento",
       luminosidad: "media",
       orientacion: "norte",
       calle: "",
@@ -73,7 +74,9 @@ export default function AddProperty() {
   const [files, setFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [errorSubmitting, setErrorSubmitting] = useState(null);
 
+  // crear previews cuando cambian archivos
   useEffect(() => {
     const urls = files.map((f) => URL.createObjectURL(f));
     setPreviewUrls(urls);
@@ -102,15 +105,17 @@ export default function AddProperty() {
           formData,
           {
             onUploadProgress: (e) => {
+              if (!e.total) return;
               const totalProgress =
                 ((i + e.loaded / e.total) / selectedFiles.length) * 100;
               setUploadProgress(Math.round(totalProgress));
             },
           }
         );
-        if (res.data.secure_url) urls.push(res.data.secure_url);
+        if (res.data && res.data.secure_url) urls.push(res.data.secure_url);
       } catch (err) {
-        console.error("Error subiendo imagen:", err.message);
+        // seguimos con las demás, pero logueamos
+        console.error("Error subiendo imagen:", err.message || err);
       }
     }
 
@@ -119,14 +124,44 @@ export default function AddProperty() {
   };
 
   const onSubmit = async (data) => {
+    setErrorSubmitting(null);
     try {
+      // subir imágenes (si hay)
       const uploadedUrls = files.length ? await uploadFiles(files) : [];
+
+      // componer dirección para mostrar en UI y en mapa
+      // guardamos también calle/numero/zona por separado (coincide con tu MockAPI)
       const direccionCompleta = `${data.calle} ${data.numero}, ${data.zona}`;
-      const payload = { 
-          ...data, 
-          direccion: direccionCompleta,
-          imagenes: uploadedUrls 
-          };
+
+      // payload exactamente con los nombres de MockAPI que mostraste
+      const payload = {
+        titulo: data.titulo,
+        descripcionCorta: data.descripcionCorta,
+        descripcionLarga: data.descripcionLarga,
+        precio: Number(data.precio),
+        moneda: data.moneda,
+        expensas: Number(data.expensas),
+        monedaExpensas: data.monedaExpensas,
+        metrosCubiertos: Number(data.metrosCubiertos),
+        metrosDescubiertos: Number(data.metrosDescubiertos),
+        metrosTotales: Number(data.metrosTotales),
+        cochera: !!data.cochera,
+        dormitorios: Number(data.dormitorios),
+        banios: Number(data.banios),
+        ambientes: Number(data.ambientes),
+        piso: Number(data.piso),
+        balcon: !!data.balcon,
+        antiguedad: Number(data.antiguedad),
+        operacion: data.operacion,
+        tipo: data.tipo,
+        luminosidad: data.luminosidad,
+        orientacion: data.orientacion,
+        calle: data.calle,
+        numero: data.numero,
+        zona: data.zona,
+        direccion: direccionCompleta,
+        imagenes: uploadedUrls,
+      };
 
       const res = await axios.post(`${MOCKAPI_BASE}/${MOCKAPI_ENDPOINT}`, payload);
 
@@ -134,18 +169,21 @@ export default function AddProperty() {
         alert("Propiedad agregada con éxito 🎉");
         reset();
         setFiles([]);
+        setPreviewUrls([]);
       } else {
-        alert("Error al guardar la propiedad");
+        throw new Error("Error al guardar la propiedad");
       }
     } catch (error) {
-      console.error("Error al enviar los datos:", error.message);
+      console.error("Error al enviar los datos:", error);
+      setErrorSubmitting("Hubo un error al guardar la propiedad. Revisa la consola.");
       alert("Hubo un error al guardar la propiedad");
     }
   };
 
   return (
-    <div className="add-property">
+    <div className="add-property container" style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
       <h2>Agregar Propiedad</h2>
+
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* DATOS BÁSICOS */}
         <div className="form-group">
@@ -156,41 +194,42 @@ export default function AddProperty() {
 
         <div className="form-group">
           <label>Descripción corta</label>
-          <textarea {...register("descripcionCorta")} />
+          <textarea {...register("descripcionCorta")} rows={2} />
           <p className="error">{errors.descripcionCorta?.message}</p>
         </div>
 
         <div className="form-group">
           <label>Descripción larga</label>
-          <textarea {...register("descripcionLarga")} />
+          <textarea {...register("descripcionLarga")} rows={4} />
           <p className="error">{errors.descripcionLarga?.message}</p>
         </div>
 
-        {/* OPERACIÓN */}
-        <div className="form-group">
-          <label>Operación</label>
-          <select {...register("operacion")}>
-            <option value="">Seleccionar</option>
-            <option value="venta">Venta</option>
-            <option value="alquiler">Alquiler</option>
-          </select>
-          <p className="error">{errors.operacion?.message}</p>
+        {/* OPERACIÓN / TIPO */}
+        <div className="form-row">
+          <div className="form-group">
+            <label>Operación</label>
+            <select {...register("operacion")}>
+              <option value="">Seleccionar</option>
+              <option value="venta">Venta</option>
+              <option value="alquiler">Alquiler</option>
+            </select>
+            <p className="error">{errors.operacion?.message}</p>
+          </div>
+
+          <div className="form-group">
+            <label>Tipo</label>
+            <select {...register("tipo")}>
+              <option value="">Seleccionar</option>
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="local comercial">Local comercial</option>
+              <option value="terreno">Terreno</option>
+            </select>
+            <p className="error">{errors.tipo?.message}</p>
+          </div>
         </div>
 
-        {/* TIPO DE PROPIEDAD */}
-        <div className="form-group">
-          <label>Tipo</label>
-          <select {...register("tipo")}>
-            <option value="">Seleccionar</option>
-            <option value="casa">Casa</option>
-            <option value="departamento">Departamento</option>
-            <option value="local comercial">Local comercial</option>
-            <option value="terreno">Terreno</option>
-          </select>
-          <p className="error">{errors.tipo?.message}</p>
-        </div>
-
-        {/* PRECIO Y EXPENSAS */}
+        {/* PRECIO / EXPENSAS */}
         <div className="form-row">
           <div className="form-group">
             <label>Precio</label>
@@ -201,14 +240,11 @@ export default function AddProperty() {
             <label>Moneda</label>
             <select {...register("moneda")}>
               <option value="">Seleccionar</option>
-              <option value="ARS">Pesos</option>
-              <option value="USD">Dólares</option>
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
             </select>
             <p className="error">{errors.moneda?.message}</p>
           </div>
-        </div>
-
-        <div className="form-row">
           <div className="form-group">
             <label>Expensas</label>
             <input type="number" {...register("expensas")} />
@@ -218,8 +254,8 @@ export default function AddProperty() {
             <label>Moneda Expensas</label>
             <select {...register("monedaExpensas")}>
               <option value="">Seleccionar</option>
-              <option value="ARS">Pesos</option>
-              <option value="USD">Dólares</option>
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
             </select>
             <p className="error">{errors.monedaExpensas?.message}</p>
           </div>
@@ -229,18 +265,18 @@ export default function AddProperty() {
         <div className="form-row">
           <div className="form-group">
             <label>m² Cubiertos</label>
-            <input type="number" {...register("areaCubierta")} />
-            <p className="error">{errors.areaCubierta?.message}</p>
+            <input type="number" {...register("metrosCubiertos")} />
+            <p className="error">{errors.metrosCubiertos?.message}</p>
           </div>
           <div className="form-group">
             <label>m² Descubiertos</label>
-            <input type="number" {...register("areaDescubierta")} />
-            <p className="error">{errors.areaDescubierta?.message}</p>
+            <input type="number" {...register("metrosDescubiertos")} />
+            <p className="error">{errors.metrosDescubiertos?.message}</p>
           </div>
           <div className="form-group">
             <label>m² Totales</label>
-            <input type="number" {...register("areaTotal")} />
-            <p className="error">{errors.areaTotal?.message}</p>
+            <input type="number" {...register("metrosTotales")} />
+            <p className="error">{errors.metrosTotales?.message}</p>
           </div>
         </div>
 
@@ -276,7 +312,7 @@ export default function AddProperty() {
           </div>
         </div>
 
-        {/* LUMINOSIDAD Y ORIENTACIÓN */}
+        {/* LUMINOSIDAD / ORIENTACIÓN / EXTRAS */}
         <div className="form-row">
           <div className="form-group">
             <label>Luminosidad</label>
@@ -288,6 +324,7 @@ export default function AddProperty() {
             </select>
             <p className="error">{errors.luminosidad?.message}</p>
           </div>
+
           <div className="form-group">
             <label>Orientación</label>
             <select {...register("orientacion")}>
@@ -299,17 +336,15 @@ export default function AddProperty() {
             </select>
             <p className="error">{errors.orientacion?.message}</p>
           </div>
-        </div>
 
-        {/* EXTRAS */}
-        <div className="form-row">
           <div className="form-group checkbox">
             <input type="checkbox" {...register("cochera")} />
-            <label>Tiene cochera</label>
+            <label>Cocheras</label>
           </div>
+
           <div className="form-group checkbox">
             <input type="checkbox" {...register("balcon")} />
-            <label>Tiene balcón</label>
+            <label>Balcón</label>
           </div>
         </div>
 
@@ -336,22 +371,27 @@ export default function AddProperty() {
         <div className="form-group">
           <label>Imágenes</label>
           <input type="file" multiple accept="image/*" onChange={handleFileChange} />
-          <div className="preview-grid">
+          <div className="preview-grid" style={{ display: "flex", gap: 8, marginTop: 8 }}>
             {previewUrls.map((url, i) => (
-              <img key={i} src={url} alt={`preview-${i}`} width="100" />
+              <img key={i} src={url} alt={`preview-${i}`} width="100" style={{ borderRadius: 6 }} />
             ))}
           </div>
+
           {uploadProgress > 0 && (
-            <div>
+            <div style={{ marginTop: 8 }}>
               Subiendo imágenes: {uploadProgress}%
-              <progress value={uploadProgress} max="100"></progress>
+              <progress value={uploadProgress} max="100" style={{ width: "100%" }} />
             </div>
           )}
         </div>
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Guardando..." : "Agregar Propiedad"}
-        </button>
+        {errorSubmitting && <p className="error">{errorSubmitting}</p>}
+
+        <div style={{ marginTop: 12 }}>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Guardando..." : "Agregar Propiedad"}
+          </button>
+        </div>
       </form>
     </div>
   );

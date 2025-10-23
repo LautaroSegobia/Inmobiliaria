@@ -13,18 +13,18 @@
     background-color: v.$background-color;
     border-radius: v.$border-radius-md;
     padding: v.$spacing-lg;
+    box-shadow: v.$shadow-sm;
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: v.$shadow-md;
+    }
 
     @media (max-width: 992px) {
       grid-template-columns: 1fr;
       padding: v.$spacing-md;
+      gap: v.$spacing-lg;
     }
-  }
-
-  // === IZQUIERDA (galería + descripción) ===
-  &__left {
-    display: flex;
-    flex-direction: column;
-    gap: v.$spacing-lg;
   }
 
   // === GALERÍA ===
@@ -39,13 +39,19 @@
       border-radius: v.$border-radius-md;
       box-shadow: v.$shadow-md;
       cursor: zoom-in;
+      background: v.$gray-100;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.01);
+      }
 
       img {
         width: 100%;
         max-height: 480px;
         object-fit: cover;
-        display: block;
         border-radius: v.$border-radius-md;
+        display: block;
 
         @media (max-width: 768px) {
           max-height: 320px;
@@ -55,8 +61,8 @@
 
     .gallery-thumbs {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: v.$spacing-sm;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: v.$spacing-xs;
 
       .thumb {
         border: none;
@@ -72,70 +78,59 @@
           height: 80px;
           object-fit: cover;
           border-radius: v.$border-radius-sm;
+          display: block;
         }
 
         &:hover {
-          transform: scale(1.03);
+          transform: scale(1.05);
           box-shadow: v.$shadow-md;
         }
 
         &.active {
           outline: 2px solid v.$primary-color;
+          transform: scale(1.05);
         }
       }
     }
   }
 
-  // === DESCRIPCIÓN ===
-  &__description {
-    background-color: v.$gray-100;
-    padding: v.$spacing-md;
-    border-radius: v.$border-radius-md;
-    box-shadow: v.$shadow-sm;
-    word-break: break-word;
-    width: 100%;
-
-    h3 {
-      color: v.$primary-color;
-      margin-bottom: v.$spacing-sm;
-    }
-
-    p {
-      font-size: v.$font-size-sm;
-      color: v.$gray-700;
-      line-height: 1.6;
-    }
-  }
-
-  // === DERECHA (info + mapa) ===
+  // === INFORMACIÓN PRINCIPAL ===
   &__content {
     display: flex;
     flex-direction: column;
     gap: v.$spacing-md;
-    align-self: start;
 
     h1 {
       font-size: v.$font-size-xl;
       color: v.$primary-color;
+      line-height: 1.2;
       margin-bottom: v.$spacing-xs;
     }
 
     .location {
       color: v.$gray-600;
       font-size: v.$font-size-sm;
+      margin-bottom: v.$spacing-xs;
     }
 
     .price {
       font-size: v.$font-size-lg;
       color: v.$secondary-color;
-      font-weight: bold;
+      font-weight: 700;
+      margin-bottom: v.$spacing-sm;
+    }
+
+    .expenses {
+      font-size: v.$font-size-sm;
+      color: v.$gray-700;
       margin-bottom: v.$spacing-sm;
     }
 
     .actions {
       display: flex;
+      flex-wrap: wrap;
       gap: v.$spacing-sm;
-      margin-bottom: v.$spacing-sm;
+      margin-bottom: v.$spacing-md;
 
       .btn {
         @include m.button(v.$secondary-color, v.$secondary-color-hover);
@@ -143,9 +138,15 @@
         align-items: center;
         gap: v.$spacing-xs;
         font-size: v.$font-size-sm;
+        font-weight: 500;
 
         &--whatsapp {
           @include m.button(v.$whatsapp-color, v.$whatsapp-color-hover);
+        }
+
+        svg {
+          width: 16px;
+          height: 16px;
         }
       }
     }
@@ -169,6 +170,7 @@
         padding-bottom: v.$spacing-xs;
         display: flex;
         justify-content: space-between;
+        align-items: center;
 
         strong {
           color: v.$primary-color;
@@ -186,7 +188,7 @@
         margin-bottom: v.$spacing-xs;
       }
 
-      p {
+      .direccion {
         font-size: v.$font-size-sm;
         color: v.$gray-600;
         margin-bottom: v.$spacing-sm;
@@ -198,7 +200,33 @@
         border: none;
         border-radius: v.$border-radius-md;
         box-shadow: v.$shadow-sm;
+
+        @media (max-width: 768px) {
+          height: 220px;
+        }
       }
+    }
+  }
+
+  // === DESCRIPCIÓN ===
+  &__description {
+    background-color: v.$gray-100;
+    padding: v.$spacing-lg;
+    border-radius: v.$border-radius-md;
+    box-shadow: v.$shadow-sm;
+    margin-top: v.$spacing-xl;
+
+    h3 {
+      color: v.$primary-color;
+      margin-bottom: v.$spacing-sm;
+      font-size: v.$font-size-md;
+      font-weight: 600;
+    }
+
+    p {
+      font-size: v.$font-size-sm;
+      color: v.$gray-700;
+      line-height: 1.7;
     }
   }
 
@@ -206,11 +234,12 @@
   .image-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    backdrop-filter: blur(4px);
     cursor: zoom-out;
 
     &__content {
@@ -220,6 +249,7 @@
       overflow: hidden;
       border-radius: v.$border-radius-md;
       box-shadow: v.$shadow-lg;
+      animation: fadeIn 0.3s ease;
     }
 
     img {
@@ -227,6 +257,7 @@
       max-width: 100%;
       max-height: 90vh;
       user-select: none;
+      transition: transform 0.3s ease;
     }
 
     &__close {
@@ -250,5 +281,46 @@
         background: v.$gray-200;
       }
     }
+
+    &__nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: v.$primary-color;
+      box-shadow: v.$shadow-sm;
+      transition: background 0.3s ease;
+
+      &:hover {
+        background: v.$gray-300;
+      }
+
+      &.prev {
+        left: v.$spacing-md;
+      }
+
+      &.next {
+        right: v.$spacing-md;
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
