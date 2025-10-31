@@ -1,10 +1,29 @@
 
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { faEnvelope, faXmark, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// brand
+import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+// solid
+import {
+  faEnvelope,
+  faXmark,
+  faChevronLeft,
+  faChevronRight,
+  faHome,
+  faTag,
+  faRulerCombined,
+  faBed,
+  faBath,
+  faCar,
+  faBuilding,
+  faCalendarAlt,
+  faSun,
+  faCompass,
+  faMapMarkerAlt,
+  faImages,
+} from "@fortawesome/free-solid-svg-icons";
 
 const FALLBACK_IMAGE = "https://placehold.co/1200x800?text=Imagen+no+disponible";
 const WHATSAPP_PHONE = "5491134567890";
@@ -16,48 +35,87 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [thumbIndex, setThumbIndex] = useState(0);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const draggingRef = useRef(false);
   const startRef = useRef({ x: 0, y: 0 });
   const originRef = useRef({ x: 0, y: 0 });
-  const draggingRef = useRef(false);
   const lastTouchDistanceRef = useRef(null);
 
   useEffect(() => {
+    let mounted = true;
     const fetchProperty = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(`${MOCKAPI_BASE}/${id}`);
-        setProperty(res.data);
+        if (!mounted) return;
+        const p = res.data || {};
+        setProperty(p);
+
         const imgs =
-          res.data.imagenes && res.data.imagenes.length
-            ? res.data.imagenes
-            : [res.data.imagen || FALLBACK_IMAGE];
-        setSelectedImage(imgs[0]);
+          Array.isArray(p.imagenes) && p.imagenes.length
+            ? p.imagenes
+            : p.imagen
+            ? [p.imagen]
+            : [FALLBACK_IMAGE];
+
+        setImages(imgs);
+        setSelectedImage((prev) => prev || imgs[0]);
+        setThumbIndex(0);
       } catch (err) {
         console.error("Error al cargar propiedad:", err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
     fetchProperty();
+    return () => {
+      mounted = false;
+    };
   }, [id]);
+
+  const direccionCompleta = (p = property) =>
+    `${p?.calle ?? ""} ${p?.numero ?? ""}${p?.zona ? `, ${p.zona}` : ""}`.trim();
+
+  const formatPrice = (val, currency) => {
+    const n = Number(val || 0);
+    const curr = currency || "ARS";
+    try {
+      return new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: ["ARS", "USD"].includes(curr) ? curr : "ARS",
+        minimumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      return `${curr} ${n.toLocaleString("es-AR")}`;
+    }
+  };
 
   const handleWhatsApp = () => {
     if (!property) return;
-    const direccion = `${property.calle || ""} ${property.numero || ""}, ${property.zona || ""}`.trim();
-    const mensaje = `Hola! Estoy interesado en la propiedad "${property.titulo}" ubicada en ${direccion}.`;
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(mensaje)}`, "_blank");
+    const msg = `Hola! Estoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(
+      property
+    )}.`;
+    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const handleEmail = () => {
     if (!property) return;
-    const direccion = `${property.calle || ""} ${property.numero || ""}, ${property.zona || ""}`.trim();
     const subject = `Consulta sobre ${property.titulo}`;
-    const body = `Hola,%0A%0AEstoy interesado en la propiedad "${property.titulo}" ubicada en ${direccion}.%0A%0AGracias.`;
-    window.location.href = `mailto:info@medinaabella.com?subject=${encodeURIComponent(subject)}&body=${body}`;
+    const body = `Hola,%0A%0AEstoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(
+      property
+    )}.%0A%0AGracias.`;
+    window.location.href = `mailto:info@medinaabella.com?subject=${encodeURIComponent(
+      subject
+    )}&body=${body}`;
   };
 
   const openModal = (img) => {
@@ -66,12 +124,29 @@ export default function PropertyDetail() {
     setZoom(1);
     setPosition({ x: 0, y: 0 });
   };
-
   const closeModal = () => {
     setModalOpen(false);
     setZoom(1);
     setPosition({ x: 0, y: 0 });
+    draggingRef.current = false;
+    lastTouchDistanceRef.current = null;
   };
+
+  const goPrev = useCallback(() => {
+    if (!images.length) return;
+    const i = images.indexOf(selectedImage);
+    const prev = i <= 0 ? images.length - 1 : i - 1;
+    setSelectedImage(images[prev]);
+    setThumbIndex(prev);
+  }, [images, selectedImage]);
+
+  const goNext = useCallback(() => {
+    if (!images.length) return;
+    const i = images.indexOf(selectedImage);
+    const next = (i + 1) % images.length;
+    setSelectedImage(images[next]);
+    setThumbIndex(next);
+  }, [images, selectedImage]);
 
   const handleWheel = (e) => {
     e.preventDefault();
@@ -79,25 +154,26 @@ export default function PropertyDetail() {
   };
 
   const handleMouseDown = (e) => {
-    if (zoom === 1) return;
+    if (zoom <= 1) return;
     draggingRef.current = true;
     startRef.current = { x: e.clientX, y: e.clientY };
     originRef.current = { ...position };
   };
-
   const handleMouseMove = (e) => {
-    if (!draggingRef.current || zoom === 1) return;
+    if (!draggingRef.current || zoom <= 1) return;
     const dx = e.clientX - startRef.current.x;
     const dy = e.clientY - startRef.current.y;
-    setPosition({
-      x: originRef.current.x + dx,
-      y: originRef.current.y + dy,
-    });
+    setPosition({ x: originRef.current.x + dx, y: originRef.current.y + dy });
   };
-
   const handleMouseUp = () => {
     draggingRef.current = false;
   };
+
+  function getTouchDistance(touches) {
+    if (!touches || touches.length < 2) return 0;
+    const [a, b] = touches;
+    return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+  }
 
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
@@ -108,7 +184,6 @@ export default function PropertyDetail() {
       originRef.current = { ...position };
     }
   };
-
   const handleTouchMove = (e) => {
     if (e.touches.length === 2) {
       const newDistance = getTouchDistance(e.touches);
@@ -120,125 +195,131 @@ export default function PropertyDetail() {
     } else if (e.touches.length === 1 && draggingRef.current && zoom > 1) {
       const dx = e.touches[0].clientX - startRef.current.x;
       const dy = e.touches[0].clientY - startRef.current.y;
-      setPosition({
-        x: originRef.current.x + dx,
-        y: originRef.current.y + dy,
-      });
+      setPosition({ x: originRef.current.x + dx, y: originRef.current.y + dy });
     }
   };
-
   const handleTouchEnd = () => {
     draggingRef.current = false;
     lastTouchDistanceRef.current = null;
   };
 
-  const handleImageClick = () => {
-    setZoom((z) => (z === 1 ? 2 : 1));
-    setPosition({ x: 0, y: 0 });
-  };
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!modalOpen) return;
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [modalOpen, goPrev, goNext]);
 
   if (loading) return <div className="loading">Cargando...</div>;
   if (error || !property) return <div className="error">Propiedad no encontrada</div>;
-
-  const images =
-    property.imagenes && property.imagenes.length
-      ? property.imagenes
-      : [property.imagen || FALLBACK_IMAGE];
-
-  const direccionCompleta = `${property.calle || ""} ${property.numero || ""}, ${property.zona || ""}`.trim();
 
   return (
     <main className="property-detail container">
       <div className="property-detail__grid">
         <div className="property-detail__left">
           <section className="property-detail__gallery">
-            <div className="gallery-main" onClick={() => openModal(selectedImage)}>
+            <div
+              className="gallery-main"
+              onClick={() => openModal(selectedImage)}
+              role="button"
+              aria-label="Abrir imagen en modal"
+            >
               <img
                 src={selectedImage || FALLBACK_IMAGE}
                 alt={property.titulo}
                 onError={(e) => (e.target.src = FALLBACK_IMAGE)}
+                className="gallery-main__img"
               />
             </div>
 
-            <div className="gallery-thumbs">
+            <div className="gallery-thumbs" aria-hidden={modalOpen}>
               {images.map((img, idx) => (
                 <button
                   key={idx}
                   className={`thumb ${selectedImage === img ? "active" : ""}`}
-                  onClick={() => setSelectedImage(img)}
+                  onClick={() => {
+                    setSelectedImage(img);
+                    setThumbIndex(idx);
+                  }}
+                  aria-label={`Seleccionar imagen ${idx + 1}`}
                 >
                   <img
                     src={img || FALLBACK_IMAGE}
                     alt={`thumb-${idx}`}
                     onError={(e) => (e.target.src = FALLBACK_IMAGE)}
+                    className="thumb__img"
                   />
                 </button>
               ))}
             </div>
           </section>
+
+          <section className="property-detail__description">
+            <h3>Descripción</h3>
+            <p>{property.descripcionLarga || property.descripcionCorta || "Sin descripción disponible."}</p>
+          </section>
         </div>
 
-        <aside className="property-detail__content">
-          <h1>{property.titulo}</h1>
-          <p className="location">{direccionCompleta}</p>
-          <p className="price">
-            {property.moneda ? property.moneda + " " : ""}
-            {Number(property.precio || 0).toLocaleString("es-AR")}
-          </p>
-
-          {Number(property.expensas) > 0 && (
-            <p className="expenses">
-              Expensas: {property.monedaExpensas || "ARS"}{" "}
-              {Number(property.expensas).toLocaleString("es-AR")}
+        <aside className="property-detail__right">
+          <section className="property-detail__info">
+            <h1 className="info__title">{property.titulo}</h1>
+            <p className="info__address">
+              <FontAwesomeIcon icon={faMapMarkerAlt} /> <span>{direccionCompleta()}</span>
             </p>
-          )}
+            <p className="info__price">{formatPrice(property.precio, property.moneda)}</p>
 
-          <div className="actions">
-            <button className="btn btn--whatsapp" onClick={handleWhatsApp}>
-              <FontAwesomeIcon icon={faWhatsapp} /> WhatsApp
-            </button>
-            <button className="btn btn--mail" onClick={handleEmail}>
-              <FontAwesomeIcon icon={faEnvelope} /> Mail
-            </button>
-          </div>
+            {Number(property.expensas) > 0 && (
+              <p className="info__expenses">
+                Expensas: {property.monedaExpensas || "ARS"} {Number(property.expensas).toLocaleString("es-AR")}
+              </p>
+            )}
 
-          <ul className="features">
-            <li><strong>Tipo:</strong> {property.tipo}</li>
-            <li><strong>Operación:</strong> {property.operacion}</li>
-            <li><strong>Ambientes:</strong> {property.ambientes}</li>
-            <li><strong>Dormitorios:</strong> {property.dormitorios}</li>
-            <li><strong>Baños:</strong> {property.banios}</li>
-            <li><strong>Metros cubiertos:</strong> {property.metrosCubiertos ?? "—"} m²</li>
-            <li><strong>Metros descubiertos:</strong> {property.metrosDescubiertos ?? "—"} m²</li>
-            <li><strong>Metros totales:</strong> {property.metrosTotales ?? "—"} m²</li>
-            <li><strong>Piso:</strong> {property.piso ?? "—"}</li>
-            <li><strong>Cocheras:</strong> {property.cochera ? "Sí" : "No"}</li>
-            <li><strong>Balcón:</strong> {property.balcon ? "Sí" : "No"}</li>
-            <li><strong>Antigüedad:</strong> {property.antiguedad ?? "—"} años</li>
-            <li><strong>Luminosidad:</strong> {property.luminosidad ?? "—"}</li>
-            <li><strong>Orientación:</strong> {property.orientacion ?? "—"}</li>
-            <li><strong>Zona:</strong> {property.zona ?? "—"}</li>
-          </ul>
+            <div className="info__actions">
+              <button className="btn btn--whatsapp" onClick={handleWhatsApp}>
+                <FontAwesomeIcon icon={faWhatsapp} /> <span>WhatsApp</span>
+              </button>
+              <button className="btn btn--mail" onClick={handleEmail}>
+                <FontAwesomeIcon icon={faEnvelope} /> <span>Mail</span>
+              </button>
+            </div>
 
-          <div className="property-detail__map">
+            <ul className="info__features">
+              <li><FontAwesomeIcon icon={faTag} /> <span>{property.operacion ?? "—"}</span></li>
+              <li><FontAwesomeIcon icon={faHome} /> <span>{property.tipo ?? "—"}</span></li>
+              <li><FontAwesomeIcon icon={faBed} /> <span>{property.dormitorios ?? 0} dormitorios</span></li>
+              <li><FontAwesomeIcon icon={faBath} /> <span>{property.banios ?? 0} baños</span></li>
+              <li><FontAwesomeIcon icon={faRulerCombined} /> <span>{property.metrosCubiertos ?? "—"} m² cub.</span></li>
+              <li><FontAwesomeIcon icon={faImages} /> <span>{property.metrosDescubiertos ?? "—"} m² desc.</span></li>
+              <li><FontAwesomeIcon icon={faRulerCombined} /> <span>{property.metrosTotales ?? "—"} m² tot.</span></li>
+              <li><FontAwesomeIcon icon={faBuilding} /> <span>Piso {property.piso ?? "—"}</span></li>
+              <li><FontAwesomeIcon icon={faCar} /> <span>{property.cochera ? "Con cochera" : "Sin cochera"}</span></li>
+              <li><FontAwesomeIcon icon={faHome} /> <span>{property.balcon ? "Con balcón" : "Sin balcón"}</span></li>
+              <li><FontAwesomeIcon icon={faCalendarAlt} /> <span>{property.antiguedad ?? "—"} años</span></li>
+              <li><FontAwesomeIcon icon={faSun} /> <span>Luminosidad: {property.luminosidad ?? "—"}</span></li>
+              <li><FontAwesomeIcon icon={faCompass} /> <span>Orientación: {property.orientacion ?? "—"}</span></li>
+              <li><FontAwesomeIcon icon={faMapMarkerAlt} /> <span>Zona: {property.zona ?? "—"}</span></li>
+            </ul>
+          </section>
+
+          <section className="property-detail__map">
             <h4>Ubicación</h4>
-            <p className="direccion">{direccionCompleta}</p>
+            <p className="map__address">{direccionCompleta()}</p>
             <iframe
               title="mapa"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(direccionCompleta)}&output=embed`}
+              className="map__iframe"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(direccionCompleta())}&output=embed`}
               loading="lazy"
             />
-          </div>
+          </section>
         </aside>
       </div>
 
-      <section className="property-detail__description">
-        <h3>Descripción</h3>
-        <p>{property.descripcionLarga || property.descripcionCorta || "Sin descripción disponible."}</p>
-      </section>
-
       {modalOpen && (
-        <div className="image-modal" onClick={closeModal}>
+        <div className="image-modal" onClick={closeModal} role="dialog" aria-modal="true">
           <div
             className="image-modal__content"
             onClick={(e) => e.stopPropagation()}
@@ -251,7 +332,7 @@ export default function PropertyDetail() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <button className="image-modal__close" onClick={closeModal}>
+            <button className="image-modal__close" onClick={closeModal} aria-label="Cerrar">
               <FontAwesomeIcon icon={faXmark} />
             </button>
 
@@ -259,34 +340,17 @@ export default function PropertyDetail() {
               src={selectedImage || FALLBACK_IMAGE}
               alt="Vista ampliada"
               draggable={false}
-              onClick={handleImageClick}
-              style={{
-                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-              }}
+              className="image-modal__img"
+              onClick={() => setZoom((z) => (z === 1 ? 2 : 1))}
+              style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }}
             />
 
             {images.length > 1 && (
               <>
-                <button
-                  className="image-modal__nav prev"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const i = images.indexOf(selectedImage);
-                    const prev = i <= 0 ? images.length - 1 : i - 1;
-                    setSelectedImage(images[prev]);
-                  }}
-                >
+                <button className="image-modal__nav image-modal__nav--prev" aria-label="Anterior" onClick={(e) => { e.stopPropagation(); goPrev(); }}>
                   <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
-                <button
-                  className="image-modal__nav next"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const i = images.indexOf(selectedImage);
-                    const next = (i + 1) % images.length;
-                    setSelectedImage(images[next]);
-                  }}
-                >
+                <button className="image-modal__nav image-modal__nav--next" aria-label="Siguiente" onClick={(e) => { e.stopPropagation(); goNext(); }}>
                   <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               </>

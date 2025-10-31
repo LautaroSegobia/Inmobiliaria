@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const FALLBACK_IMAGE = "https://placehold.co/400x250?text=Sin+Imagen";
+const WHATSAPP_PHONE = "5491134567890"; // ⚠️ Ajustar número
 
 export default function Card({
   id,
@@ -28,10 +29,10 @@ export default function Card({
   autoplay = true,
   autoplayInterval = 3000,
 }) {
-  // Combinar dirección
+  // Dirección combinada
   const location = [calle, numero, zona].filter(Boolean).join(" ");
 
-  // Normalizar array de imágenes
+  // Normalizar imágenes
   const allImages = Array.isArray(images)
     ? images
     : Array.isArray(image)
@@ -42,11 +43,12 @@ export default function Card({
   const [isHovering, setIsHovering] = useState(false);
   const autoplayRef = useRef(null);
 
-  // touch swipe
+  // Swipe
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
   const minSwipeDistance = 40;
 
+  // Formatear precio
   const formatPrice = (value, currency) => {
     if (!value || isNaN(value)) return "$0";
     const validCurrency = ["ARS", "USD"].includes(currency) ? currency : "ARS";
@@ -57,39 +59,26 @@ export default function Card({
     }).format(value);
   };
 
+  // Navegación de imágenes
   const nextImage = () =>
     setCurrentIndex((prev) => (prev + 1) % allImages.length);
-
   const prevImage = () =>
-    setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+    setCurrentIndex((prev) =>
+      prev === 0 ? allImages.length - 1 : prev - 1
+    );
 
-  // autoplay
+  // Autoplay
   useEffect(() => {
-    if (!autoplay) return;
-    if (allImages.length <= 1) return;
-
+    if (!autoplay || allImages.length <= 1) return;
     if (!isHovering) {
       autoplayRef.current = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % allImages.length);
       }, autoplayInterval);
     }
-
-    return () => {
-      if (autoplayRef.current) {
-        clearInterval(autoplayRef.current);
-        autoplayRef.current = null;
-      }
-    };
+    return () => clearInterval(autoplayRef.current);
   }, [isHovering, allImages.length, autoplay, autoplayInterval]);
 
-  // limpiar interval si cambian imágenes
-  useEffect(() => {
-    return () => {
-      if (autoplayRef.current) clearInterval(autoplayRef.current);
-    };
-  }, []);
-
-  // touch handlers
+  // Swipe handlers
   const onTouchStart = (e) => {
     touchEndX.current = null;
     touchStartX.current = e.touches[0].clientX;
@@ -101,13 +90,7 @@ export default function Card({
     if (!touchStartX.current || !touchEndX.current) return;
     const distance = touchStartX.current - touchEndX.current;
     if (Math.abs(distance) > minSwipeDistance) {
-      if (distance > 0) {
-        // swipe left
-        nextImage();
-      } else {
-        // swipe right
-        prevImage();
-      }
+      distance > 0 ? nextImage() : prevImage();
     }
     touchStartX.current = null;
     touchEndX.current = null;
@@ -115,6 +98,24 @@ export default function Card({
 
   const imageUrl = allImages[currentIndex] || FALLBACK_IMAGE;
 
+  // === NUEVAS FUNCIONES ===
+  const handleWhatsApp = () => {
+    const msg = `Hola! Estoy interesado en la propiedad "${title}" ubicada en ${location}.`;
+    window.open(
+      `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
+  };
+
+  const handleEmail = () => {
+    const subject = `Consulta sobre ${title}`;
+    const body = `Hola,%0A%0AEstoy interesado en la propiedad "${title}" ubicada en ${location}.%0A%0AGracias.`;
+    window.location.href = `mailto:info@medinaabella.com?subject=${encodeURIComponent(
+      subject
+    )}&body=${body}`;
+  };
+
+  // === Render ===
   return (
     <div
       className="card"
@@ -134,7 +135,6 @@ export default function Card({
           onError={(e) => (e.target.src = FALLBACK_IMAGE)}
         />
 
-        {/* Controles solo si hay >1 imagen */}
         {allImages.length > 1 && (
           <div className="card__image-controls">
             <button
@@ -183,7 +183,9 @@ export default function Card({
             {location || "Dirección no especificada"}
           </p>
           <p className="card__description">
-            {description ? description.slice(0, 120) + "..." : "Sin descripción"}
+            {description
+              ? description.slice(0, 120) + "..."
+              : "Sin descripción"}
           </p>
         </div>
 
@@ -192,11 +194,19 @@ export default function Card({
             <FontAwesomeIcon icon={faInfoCircle} /> Ver detalles
           </Link>
 
-          <button className="btn btn-whatsapp" type="button">
+          <button
+            className="btn btn-whatsapp"
+            type="button"
+            onClick={handleWhatsApp}
+          >
             <FontAwesomeIcon icon={faWhatsapp} /> WhatsApp
           </button>
 
-          <button className="btn btn-secondary" type="button">
+          <button
+            className="btn btn-secondary"
+            type="button"
+            onClick={handleEmail}
+          >
             <FontAwesomeIcon icon={faEnvelope} /> Contactar
           </button>
         </div>
