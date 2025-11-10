@@ -9,6 +9,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../contexts/AuthContext"; // ✅ usamos el hook personalizado
 
 const FALLBACK_IMAGE = "https://placehold.co/400x250?text=Sin+Imagen";
 const WHATSAPP_PHONE = "5491134567890"; // ⚠️ Ajustar número
@@ -28,7 +29,11 @@ export default function Card({
   tag,
   autoplay = true,
   autoplayInterval = 3000,
+  onEdit, // opcional: función para editar
+  onDelete, // opcional: función para eliminar
 }) {
+  const { user } = useAuth(); // ✅ obtenemos usuario logueado
+
   // Dirección combinada
   const location = [calle, numero, zona].filter(Boolean).join(" ");
 
@@ -98,7 +103,7 @@ export default function Card({
 
   const imageUrl = allImages[currentIndex] || FALLBACK_IMAGE;
 
-  // === NUEVAS FUNCIONES ===
+  // === Funciones de contacto ===
   const handleWhatsApp = () => {
     const msg = `Hola! Estoy interesado en la propiedad "${title}" ubicada en ${location}.`;
     window.open(
@@ -114,6 +119,18 @@ export default function Card({
       subject
     )}&body=${body}`;
   };
+
+  // Helpers seguros
+  const handleEditClick = () => {
+    if (typeof onEdit === "function") onEdit(id);
+  };
+  const handleDeleteClick = () => {
+    if (typeof onDelete === "function") onDelete(id);
+  };
+
+  // Control de permisos
+  const canManage =
+    user && (user.role === "admin" || user.role === "developer");
 
   // === Render ===
   return (
@@ -209,6 +226,35 @@ export default function Card({
           >
             <FontAwesomeIcon icon={faEnvelope} /> Contactar
           </button>
+
+          {/* ✅ Mostrar botones de editar/eliminar sólo para admin o developer */}
+          {canManage && (
+            <>
+              <button
+                className="btn btn-edit"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick();
+                }}
+              >
+                Editar
+              </button>
+
+              <button
+                className="btn btn-delete"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm("¿Eliminar esta propiedad?")) {
+                    handleDeleteClick();
+                  }
+                }}
+              >
+                Eliminar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

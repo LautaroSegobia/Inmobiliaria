@@ -1,0 +1,61 @@
+
+@use "../abstracts/variables" as v;
+@use "../abstracts/mixins" as m;
+
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: v.$spacing-md;
+  padding: v.$spacing-md;
+  background: v.$gray-100;
+  border-radius: v.$border-radius-md;
+  box-shadow: v.$shadow-md;
+}
+
+.upload-input-label {
+  display: block;
+  padding: v.$spacing-sm $spacing-md;
+  background: v.$primary-color;
+  color: #fff;
+  border-radius: v.$border-radius-sm;
+  cursor: pointer;
+  width: fit-content;
+  font-size: v.$font-size-sm;
+  font-weight: 500;
+  transition: background 0.3s;
+
+  &:hover {
+    background: v.$primary-color-hover;
+  }
+
+  input {
+    display: none;
+  }
+}
+
+.preview-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: v.$spacing-sm;
+}
+
+.preview-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: v.$border-radius-sm;
+  overflow: hidden;
+  background: v.$gray-200;
+  box-shadow: v.$shadow-sm;
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.upload-btn {
+  @include button(v.$secondary-color, v.$secondary-color-hover);
+  width: fit-content;
+}

@@ -1,7 +1,13 @@
 
+import { useNavigate } from "react-router-dom";
 import useForm from "../hooks/useForm";
+import { loginUser } from "../services/authService"; 
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const initialValues = { email: "", password: "" };
 
   const validate = (values) => {
@@ -13,15 +19,23 @@ export default function Login() {
     }
     if (!values.password.trim()) {
       errors.password = "La contraseña es obligatoria";
-    } else if (values.password.length < 6) {
-      errors.password = "Mínimo 6 caracteres";
     }
     return errors;
   };
 
-  const onSubmit = (values) => {
-    console.log("Login:", values);
-    alert("Sesión iniciada ✅");
+  const onSubmit = async (values) => {
+  try {
+    const data = await loginUser(values);
+
+    // Guardamos sesión usando el contexto
+      login(data.user, data.token);
+
+    // Redirigir al dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Error al iniciar sesión");
+    }
   };
 
   const { form, errors, handleChange, handleSubmit } = useForm(initialValues, validate, onSubmit);

@@ -1,398 +1,453 @@
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
+import { useState } from "react";
+import { addProperty } from "../services/propertyService";
+import { useAuth } from "../contexts/AuthContext";
 
-/* Configuración mockapi y cloudinary */
-const MOCKAPI_BASE = "https://68cca15b716562cf5077f884.mockapi.io";
-const MOCKAPI_ENDPOINT = "properties";
-
-const CLOUD_NAME = "dcnd6bmzb";
-const UPLOAD_PRESET = "propiedades_unsigned";
-
-/* Validaciones (yup) */
-const schema = yup.object().shape({
-  titulo: yup.string().required("El título es obligatorio").min(3),
-  descripcionCorta: yup.string().required("La descripción corta es obligatoria").min(10),
-  descripcionLarga: yup.string().required("La descripción larga es obligatoria").min(20),
-  precio: yup.number().typeError("Debe ser un número").positive().required(),
-  moneda: yup.string().required("Selecciona una moneda"),
-  expensas: yup.number().typeError("Debe ser un número").min(0).required(),
-  monedaExpensas: yup.string().required("Selecciona una moneda"),
-  metrosCubiertos: yup.number().typeError("Debe ser un número").min(0).required(),
-  metrosDescubiertos: yup.number().typeError("Debe ser un número").min(0).required(),
-  metrosTotales: yup.number().typeError("Debe ser un número").min(0).required(),
-  cochera: yup.boolean(),
-  dormitorios: yup.number().typeError("Debe ser un número").min(0).required(),
-  banios: yup.number().typeError("Debe ser un número").min(0).required(),
-  ambientes: yup.number().typeError("Debe ser un número").min(1).required(),
-  piso: yup.number().typeError("Debe ser un número").min(0).required(),
-  balcon: yup.boolean(),
-  antiguedad: yup.number().typeError("Debe ser un número").min(0).required(),
-  operacion: yup.string().required("Selecciona una operación"),
-  tipo: yup.string().required("Selecciona un tipo de propiedad"),
-  luminosidad: yup.string().required("Selecciona luminosidad"),
-  orientacion: yup.string().required("Selecciona orientación"),
-  calle: yup.string().required("La calle es obligatoria"),
-  numero: yup.string().required("El número es obligatorio"),
-  zona: yup.string().required("La zona es obligatoria"),
-});
-
-export default function AddProperty() {
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      titulo: "",
-      descripcionCorta: "",
-      descripcionLarga: "",
-      precio: "",
-      moneda: "ARS",
-      expensas: 0,
-      monedaExpensas: "ARS",
-      metrosCubiertos: 0,
-      metrosDescubiertos: 0,
-      metrosTotales: 0,
-      cochera: false,
-      dormitorios: 0,
-      banios: 0,
-      ambientes: 1,
-      piso: 0,
-      balcon: false,
-      antiguedad: 0,
-      operacion: "venta",
-      tipo: "departamento",
-      luminosidad: "media",
-      orientacion: "norte",
-      calle: "",
-      numero: "",
-      zona: "",
-    },
+const AddProperty = () => {
+  const { user } = useAuth();
+  const [form, setForm] = useState({
+    titulo: "",
+    descripcionCorta: "",
+    descripcionLarga: "",
+    operacion: "",
+    tipo: "",
+    m2Cubiertos: "",
+    m2Descubiertos: "",
+    m2Totales: "",
+    precio: "",
+    expensas: "",
+    monedaPrecio: "USD",
+    monedaExpensas: "USD",
+    ambientes: "",
+    dormitorios: "",
+    banos: "",
+    luminosidad: "",
+    orientacion: "",
+    piso: "",
+    antiguedad: "",
+    cochera: false,
+    balcon: false,
+    calle: "",
+    numero: "",
+    zona: "",
   });
 
-  const [files, setFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [errorSubmitting, setErrorSubmitting] = useState(null);
+  const [imagenes, setImagenes] = useState([]); // { file, preview, isCover }
+  const [error, setError] = useState("");
 
-  // crear previews cuando cambian archivos
-  useEffect(() => {
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setPreviewUrls(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [files]);
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
 
+  // ✅ Carga de imágenes locales con preview
   const handleFileChange = (e) => {
-    const selected = Array.from(e.target.files || []);
-    const imgs = selected.filter((f) => f.type.startsWith("image/"));
-    setFiles(imgs);
+    const files = Array.from(e.target.files);
+    const newImgs = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isCover: false,
+    }));
+    setImagenes((prev) => [...prev, ...newImgs]);
   };
 
-  const uploadFiles = async (selectedFiles) => {
-    const urls = [];
-    setUploadProgress(0);
-
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      try {
-        const res = await axios.post(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-          formData,
-          {
-            onUploadProgress: (e) => {
-              if (!e.total) return;
-              const totalProgress =
-                ((i + e.loaded / e.total) / selectedFiles.length) * 100;
-              setUploadProgress(Math.round(totalProgress));
-            },
-          }
-        );
-        if (res.data && res.data.secure_url) urls.push(res.data.secure_url);
-      } catch (err) {
-        // seguimos con las demás, pero logueamos
-        console.error("Error subiendo imagen:", err.message || err);
-      }
-    }
-
-    setUploadProgress(0);
-    return urls;
+  // ✅ Eliminar imagen
+  const handleRemoveImage = (index) => {
+    const newList = imagenes.filter((_, i) => i !== index);
+    setImagenes(newList);
   };
 
-  const onSubmit = async (data) => {
-    setErrorSubmitting(null);
+  // ✅ Marcar como portada
+  const handleSetCover = (index) => {
+    setImagenes((prev) =>
+      prev.map((img, i) => ({
+        ...img,
+        isCover: i === index,
+      }))
+    );
+  };
+
+  // ✅ Envío del formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      // subir imágenes (si hay)
-      const uploadedUrls = files.length ? await uploadFiles(files) : [];
-
-      // componer dirección para mostrar en UI y en mapa
-      // guardamos también calle/numero/zona por separado (coincide con tu MockAPI)
-      const direccionCompleta = `${data.calle} ${data.numero}, ${data.zona}`;
-
-      // payload exactamente con los nombres de MockAPI que mostraste
-      const payload = {
-        titulo: data.titulo,
-        descripcionCorta: data.descripcionCorta,
-        descripcionLarga: data.descripcionLarga,
-        precio: Number(data.precio),
-        moneda: data.moneda,
-        expensas: Number(data.expensas),
-        monedaExpensas: data.monedaExpensas,
-        metrosCubiertos: Number(data.metrosCubiertos),
-        metrosDescubiertos: Number(data.metrosDescubiertos),
-        metrosTotales: Number(data.metrosTotales),
-        cochera: !!data.cochera,
-        dormitorios: Number(data.dormitorios),
-        banios: Number(data.banios),
-        ambientes: Number(data.ambientes),
-        piso: Number(data.piso),
-        balcon: !!data.balcon,
-        antiguedad: Number(data.antiguedad),
-        operacion: data.operacion,
-        tipo: data.tipo,
-        luminosidad: data.luminosidad,
-        orientacion: data.orientacion,
-        calle: data.calle,
-        numero: data.numero,
-        zona: data.zona,
-        direccion: direccionCompleta,
-        imagenes: uploadedUrls,
+      const data = {
+        ...form,
+        imagenes,
+        createdBy: user?.email || "anon",
       };
 
-      const res = await axios.post(`${MOCKAPI_BASE}/${MOCKAPI_ENDPOINT}`, payload);
+      console.log("🟢 Enviando propiedad a backend:", data);
+      const response = await addProperty(data);
+      console.log("✅ Respuesta del servidor:", response);
 
-      if (res.status >= 200 && res.status < 300) {
-        alert("Propiedad agregada con éxito 🎉");
-        reset();
-        setFiles([]);
-        setPreviewUrls([]);
-      } else {
-        throw new Error("Error al guardar la propiedad");
-      }
-    } catch (error) {
-      console.error("Error al enviar los datos:", error);
-      setErrorSubmitting("Hubo un error al guardar la propiedad. Revisa la consola.");
-      alert("Hubo un error al guardar la propiedad");
+      alert("Propiedad agregada correctamente!");
+      setForm({
+        titulo: "",
+        descripcionCorta: "",
+        descripcionLarga: "",
+        operacion: "",
+        tipo: "",
+        m2Cubiertos: "",
+        m2Descubiertos: "",
+        m2Totales: "",
+        precio: "",
+        expensas: "",
+        monedaPrecio: "USD",
+        monedaExpensas: "USD",
+        ambientes: "",
+        dormitorios: "",
+        banos: "",
+        luminosidad: "",
+        orientacion: "",
+        piso: "",
+        antiguedad: "",
+        cochera: false,
+        balcon: false,
+        calle: "",
+        numero: "",
+        zona: "",
+      });
+      setImagenes([]);
+    } catch (err) {
+      console.error("❌ Error al agregar propiedad:", err);
+      setError("Error al agregar la propiedad. Ver consola para más detalles.");
     }
   };
 
   return (
-    <div className="add-property container" style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
-      <h2>Agregar Propiedad</h2>
+    <div className="add-property">
+      <h1 className="add-property__title">Agregar Propiedad</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* DATOS BÁSICOS */}
-        <div className="form-group">
+      <form className="add-property__form" onSubmit={handleSubmit}>
+        {/* Título */}
+        <div className="add-property__group">
           <label>Título</label>
-          <input {...register("titulo")} />
-          <p className="error">{errors.titulo?.message}</p>
+          <input
+            type="text"
+            name="titulo"
+            value={form.titulo}
+            onChange={handleChange}
+            required
+          />
         </div>
 
-        <div className="form-group">
+        {/* Descripción corta */}
+        <div className="add-property__group">
           <label>Descripción corta</label>
-          <textarea {...register("descripcionCorta")} rows={2} />
-          <p className="error">{errors.descripcionCorta?.message}</p>
+          <input
+            type="text"
+            name="descripcionCorta"
+            value={form.descripcionCorta}
+            onChange={handleChange}
+          />
         </div>
 
-        <div className="form-group">
+        {/* Descripción larga */}
+        <div className="add-property__group">
           <label>Descripción larga</label>
-          <textarea {...register("descripcionLarga")} rows={4} />
-          <p className="error">{errors.descripcionLarga?.message}</p>
+          <textarea
+            name="descripcionLarga"
+            rows="4"
+            value={form.descripcionLarga}
+            onChange={handleChange}
+          />
         </div>
 
-        {/* OPERACIÓN / TIPO */}
-        <div className="form-row">
-          <div className="form-group">
+        {/* Operación - Tipo */}
+        <div className="add-property__group">
+          <div>
             <label>Operación</label>
-            <select {...register("operacion")}>
-              <option value="">Seleccionar</option>
+            <select
+              name="operacion"
+              value={form.operacion}
+              onChange={handleChange}
+            >
+              <option value="">Seleccionar...</option>
               <option value="venta">Venta</option>
               <option value="alquiler">Alquiler</option>
             </select>
-            <p className="error">{errors.operacion?.message}</p>
           </div>
-
-          <div className="form-group">
+          <div>
             <label>Tipo</label>
-            <select {...register("tipo")}>
-              <option value="">Seleccionar</option>
-              <option value="casa">Casa</option>
+            <select name="tipo" value={form.tipo} onChange={handleChange}>
+              <option value="">Seleccionar...</option>
               <option value="departamento">Departamento</option>
-              <option value="local comercial">Local comercial</option>
+              <option value="casa">Casa</option>
+              <option value="oficina">Oficina</option>
+              <option value="local">Local</option>
+              <option value="ph">PH</option>
               <option value="terreno">Terreno</option>
             </select>
-            <p className="error">{errors.tipo?.message}</p>
           </div>
         </div>
 
-        {/* PRECIO / EXPENSAS */}
-        <div className="form-row">
-          <div className="form-group">
-            <label>Precio</label>
-            <input type="number" {...register("precio")} />
-            <p className="error">{errors.precio?.message}</p>
-          </div>
-          <div className="form-group">
-            <label>Moneda</label>
-            <select {...register("moneda")}>
-              <option value="">Seleccionar</option>
-              <option value="ARS">ARS</option>
-              <option value="USD">USD</option>
-            </select>
-            <p className="error">{errors.moneda?.message}</p>
-          </div>
-          <div className="form-group">
-            <label>Expensas</label>
-            <input type="number" {...register("expensas")} />
-            <p className="error">{errors.expensas?.message}</p>
-          </div>
-          <div className="form-group">
-            <label>Moneda Expensas</label>
-            <select {...register("monedaExpensas")}>
-              <option value="">Seleccionar</option>
-              <option value="ARS">ARS</option>
-              <option value="USD">USD</option>
-            </select>
-            <p className="error">{errors.monedaExpensas?.message}</p>
-          </div>
-        </div>
-
-        {/* MEDIDAS */}
-        <div className="form-row">
-          <div className="form-group">
+        {/* Superficies */}
+        <div className="add-property__group">
+          <div>
             <label>m² Cubiertos</label>
-            <input type="number" {...register("metrosCubiertos")} />
-            <p className="error">{errors.metrosCubiertos?.message}</p>
+            <input
+              type="number"
+              name="m2Cubiertos"
+              value={form.m2Cubiertos}
+              onChange={handleChange}
+            />
           </div>
-          <div className="form-group">
+          <div>
             <label>m² Descubiertos</label>
-            <input type="number" {...register("metrosDescubiertos")} />
-            <p className="error">{errors.metrosDescubiertos?.message}</p>
+            <input
+              type="number"
+              name="m2Descubiertos"
+              value={form.m2Descubiertos}
+              onChange={handleChange}
+            />
           </div>
-          <div className="form-group">
+          <div>
             <label>m² Totales</label>
-            <input type="number" {...register("metrosTotales")} />
-            <p className="error">{errors.metrosTotales?.message}</p>
+            <input
+              type="number"
+              name="m2Totales"
+              value={form.m2Totales}
+              onChange={handleChange}
+            />
           </div>
         </div>
 
-        {/* CARACTERÍSTICAS */}
-        <div className="form-row">
-          <div className="form-group">
-            <label>Dormitorios</label>
-            <input type="number" {...register("dormitorios")} />
-            <p className="error">{errors.dormitorios?.message}</p>
+        {/* Precio / Expensas */}
+        <div className="add-property__group">
+          <div>
+            <label>Precio</label>
+            <input
+              type="number"
+              name="precio"
+              value={form.precio}
+              onChange={handleChange}
+            />
           </div>
-          <div className="form-group">
-            <label>Baños</label>
-            <input type="number" {...register("banios")} />
-            <p className="error">{errors.banios?.message}</p>
+          <div>
+            <label>Moneda</label>
+            <select
+              name="monedaPrecio"
+              value={form.monedaPrecio}
+              onChange={handleChange}
+            >
+              <option value="USD">USD</option>
+              <option value="ARS">ARS</option>
+            </select>
           </div>
-          <div className="form-group">
+          <div>
+            <label>Expensas</label>
+            <input
+              type="number"
+              name="expensas"
+              value={form.expensas}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Moneda</label>
+            <select
+              name="monedaExpensas"
+              value={form.monedaExpensas}
+              onChange={handleChange}
+            >
+              <option value="USD">USD</option>
+              <option value="ARS">ARS</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Ambientes / Dormitorios / Baños */}
+        <div className="add-property__group">
+          <div>
             <label>Ambientes</label>
-            <input type="number" {...register("ambientes")} />
-            <p className="error">{errors.ambientes?.message}</p>
+            <input
+              type="number"
+              name="ambientes"
+              value={form.ambientes}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Dormitorios</label>
+            <input
+              type="number"
+              name="dormitorios"
+              value={form.dormitorios}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Baños</label>
+            <input
+              type="number"
+              name="banos"
+              value={form.banos}
+              onChange={handleChange}
+            />
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>Piso</label>
-            <input type="number" {...register("piso")} />
-            <p className="error">{errors.piso?.message}</p>
-          </div>
-          <div className="form-group">
-            <label>Antigüedad (años)</label>
-            <input type="number" {...register("antiguedad")} />
-            <p className="error">{errors.antiguedad?.message}</p>
-          </div>
-        </div>
-
-        {/* LUMINOSIDAD / ORIENTACIÓN / EXTRAS */}
-        <div className="form-row">
-          <div className="form-group">
+        {/* Luminosidad / Orientación */}
+        <div className="add-property__group">
+          <div>
             <label>Luminosidad</label>
-            <select {...register("luminosidad")}>
-              <option value="">Seleccionar</option>
+            <select
+              name="luminosidad"
+              value={form.luminosidad}
+              onChange={handleChange}
+            >
+              <option value="">Seleccionar...</option>
               <option value="alta">Alta</option>
               <option value="media">Media</option>
               <option value="baja">Baja</option>
             </select>
-            <p className="error">{errors.luminosidad?.message}</p>
           </div>
-
-          <div className="form-group">
+          <div>
             <label>Orientación</label>
-            <select {...register("orientacion")}>
-              <option value="">Seleccionar</option>
+            <select
+              name="orientacion"
+              value={form.orientacion}
+              onChange={handleChange}
+            >
+              <option value="">Seleccionar...</option>
               <option value="norte">Norte</option>
               <option value="sur">Sur</option>
               <option value="este">Este</option>
               <option value="oeste">Oeste</option>
             </select>
-            <p className="error">{errors.orientacion?.message}</p>
-          </div>
-
-          <div className="form-group checkbox">
-            <input type="checkbox" {...register("cochera")} />
-            <label>Cocheras</label>
-          </div>
-
-          <div className="form-group checkbox">
-            <input type="checkbox" {...register("balcon")} />
-            <label>Balcón</label>
           </div>
         </div>
 
-        {/* DIRECCIÓN */}
-        <div className="form-row">
-          <div className="form-group">
+        {/* Piso / Antigüedad */}
+        <div className="add-property__group">
+          <div>
+            <label>Piso</label>
+            <input
+              type="number"
+              name="piso"
+              value={form.piso}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Antigüedad (años)</label>
+            <input
+              type="number"
+              name="antiguedad"
+              value={form.antiguedad}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        {/* 🚗 / 🌇 */}
+        <div className="add-property__checkboxes">
+          <label>
+            <input
+              type="checkbox"
+              name="cochera"
+              checked={form.cochera}
+              onChange={handleChange}
+            />
+            Cochera
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              name="balcon"
+              checked={form.balcon}
+              onChange={handleChange}
+            />
+            Balcón
+          </label>
+        </div>
+
+        {/* 📍 Dirección */}
+        <div className="add-property__group">
+          <div>
             <label>Calle</label>
-            <input {...register("calle")} />
-            <p className="error">{errors.calle?.message}</p>
+            <input
+              type="text"
+              name="calle"
+              value={form.calle}
+              onChange={handleChange}
+            />
           </div>
-          <div className="form-group">
+          <div>
             <label>Número</label>
-            <input {...register("numero")} />
-            <p className="error">{errors.numero?.message}</p>
+            <input
+              type="text"
+              name="numero"
+              value={form.numero}
+              onChange={handleChange}
+            />
           </div>
-          <div className="form-group">
-            <label>Zona / Barrio</label>
-            <input {...register("zona")} />
-            <p className="error">{errors.zona?.message}</p>
+          <div>
+            <label>Zona</label>
+            <input
+              type="text"
+              name="zona"
+              value={form.zona}
+              onChange={handleChange}
+            />
           </div>
         </div>
 
-        {/* IMÁGENES */}
-        <div className="form-group">
-          <label>Imágenes</label>
-          <input type="file" multiple accept="image/*" onChange={handleFileChange} />
-          <div className="preview-grid" style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            {previewUrls.map((url, i) => (
-              <img key={i} src={url} alt={`preview-${i}`} width="100" style={{ borderRadius: 6 }} />
+        {/* 📸 Carga multimedia */}
+        <div className="add-property__upload">
+          <label className="add-property__upload__label">
+            Cargar archivos multimedia
+          </label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+
+          {/* Vista previa */}
+          <div className="add-property__preview">
+            {imagenes.map((img, index) => (
+              <div
+                key={index}
+                className={`add-property__thumb ${
+                  img.isCover ? "is-cover" : ""
+                }`}
+              >
+                <img src={img.preview} alt={`preview-${index}`} />
+                <div className="add-property__thumb-actions">
+                  <button
+                    type="button"
+                    className="btn-cover"
+                    onClick={() => handleSetCover(index)}
+                  >
+                    Portada
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-delete"
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
-
-          {uploadProgress > 0 && (
-            <div style={{ marginTop: 8 }}>
-              Subiendo imágenes: {uploadProgress}%
-              <progress value={uploadProgress} max="100" style={{ width: "100%" }} />
-            </div>
-          )}
         </div>
 
-        {errorSubmitting && <p className="error">{errorSubmitting}</p>}
+        {error && <p className="add-property__error">{error}</p>}
 
-        <div style={{ marginTop: 12 }}>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Agregar Propiedad"}
-          </button>
-        </div>
+        <button type="submit" className="add-property__submit">
+          Agregar Propiedad
+        </button>
       </form>
     </div>
   );
-}
+};
+
+export default AddProperty;

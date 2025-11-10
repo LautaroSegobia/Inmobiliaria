@@ -1,198 +1,260 @@
 
+@use "sass:color";
 @use "../abstracts/variables" as v;
 @use "../abstracts/mixins" as m;
 
+/* Block: add-property (BEM) */
 .add-property {
   max-width: 900px;
-  margin: 3rem auto;
-  padding: 2rem 3rem;
+  margin: v.$spacing-xl auto;
+  padding: v.$spacing-xl;
   background: v.$background-color;
   border-radius: v.$border-radius-lg;
-  box-shadow: v.$shadow-md;
-  color: v.$text-color;
+  box-shadow: v.$shadow-lg;
   font-family: v.$font-family;
-  transition: all 0.3s ease;
+  color: v.$text-color;
 
-  h2 {
-    text-align: center;
-    margin-bottom: v.$spacing-lg;
+  &__title {
+    font-size: v.$font-size-xxl;
     color: v.$primary-color;
-    font-size: v.$font-size-xl;
+    text-align: center;
     font-weight: 700;
+    margin-bottom: v.$spacing-lg;
   }
 
-  form {
+  &__form {
     display: flex;
     flex-direction: column;
-    gap: v.$spacing-md;
+    gap: v.$spacing-lg;
   }
 
-  .form-row {
+  /* Inputs (uses mixin) */
+  input,
+  select,
+  textarea {
+    @include m.input-style;
+    background: v.$input-background;
+    border: v.$input-border-width solid v.$border-color;
+    border-radius: v.$input-border-radius;
+    padding: v.$input-padding;
+    font-size: v.$font-size-md;
+    color: v.$text-color;
+  }
+
+  &__group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: v.$spacing-md;
+    align-items: start;
+  }
+
+  &__row {
     display: flex;
+    gap: v.$spacing-md;
     flex-wrap: wrap;
-    gap: v.$spacing-md;
-
-    .form-group {
-      flex: 1;
-      min-width: 240px;
-    }
   }
 
-  .form-group {
+  /* Labels */
+  label {
+    display: block;
+    font-size: v.$font-size-sm;
+    color: v.$gray-700;
+    font-weight: 600;
+    margin-bottom: v.$spacing-xs;
+  }
+
+  /* Checkboxes row */
+  &__checkboxes {
     display: flex;
-    flex-direction: column;
-    position: relative;
+    gap: v.$spacing-lg;
+    align-items: center;
 
     label {
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-      color: v.$gray-700;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: v.$input-padding;
-      border: v.$input-border-width solid v.$border-color;
-      border-radius: v.$input-border-radius;
-      background: v.$input-background;
-      color: v.$text-color;
-      font-size: v.$font-size-md;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-
-      &:focus {
-        border-color: v.$primary-color;
-        box-shadow: 0 0 0 2px rgba(v.$primary-color, 0.15);
-        outline: none;
-      }
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 90px;
-    }
-
-    &.checkbox {
-      flex-direction: row;
+      font-weight: 500;
+      color: v.$gray-800;
+      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: v.$spacing-xs;
 
-      input {
-        width: auto;
-        cursor: pointer;
+      input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
       }
-
-      label {
-        margin-bottom: 0;
-      }
-    }
-
-    .error {
-      color: v.$error-color;
-      font-size: v.$font-size-sm;
-      margin-top: 0.2rem;
     }
   }
 
-  fieldset {
-    border: 1px solid v.$gray-300;
-    border-radius: v.$border-radius-sm;
-    padding: v.$spacing-md;
-    margin-top: v.$spacing-md;
-
-    legend {
-      font-weight: 600;
-      color: v.$primary-color;
-      padding: 0 0.5rem;
-    }
-  }
-
-  button {
-    background: v.$primary-color;
-    color: v.$light-color;
-    font-weight: 600;
-    font-size: v.$font-size-md;
-    padding: 1rem 2rem;
-    border: none;
+  /* Upload area (visually highlighted) */
+  &__upload {
+    background: color.adjust(v.$light-color, $lightness: 4%);
     border-radius: v.$border-radius-md;
-    cursor: pointer;
-    align-self: center;
-    margin-top: v.$spacing-lg;
-    transition: background 0.2s ease, transform 0.1s ease;
+    padding: v.$spacing-md;
+    border: 2px dashed color.adjust(v.$primary-color, $lightness: -18%);
+    display: flex;
+    flex-direction: column;
+    gap: v.$spacing-sm;
+    align-items: center;
+    text-align: center;
+    transition: background 0.18s ease, transform 0.12s ease;
 
     &:hover {
-      background: v.$primary-color-hover;
+      background: color.adjust(v.$light-color, $lightness: 8%);
       transform: translateY(-2px);
     }
 
-    &:active {
-      transform: translateY(0);
+    &__label {
+      font-size: v.$font-size-md;
+      color: v.$primary-color;
+      font-weight: 600;
+    }
+
+    input[type="file"] {
+      margin-top: v.$spacing-sm;
+      cursor: pointer;
+    }
+
+    p {
+      margin: 0;
+      font-size: v.$font-size-sm;
+      color: v.$gray-700;
     }
   }
 
-  // 📸 Galería de previews
-  .preview-grid {
+  /* Preview gallery */
+  &__preview {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: v.$spacing-sm;
-    margin-top: v.$spacing-md;
-    margin-bottom: v.$spacing-md;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: v.$spacing-md;
+    margin-top: v.$spacing-sm;
+    align-items: start;
+  }
+
+  &__thumb {
+    background: v.$gray-100;
+    border-radius: v.$border-radius-sm;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+    border: 2px solid transparent;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 
     img {
+      display: block;
       width: 100%;
-      height: 110px;
+      height: 140px;
       object-fit: cover;
-      border-radius: v.$border-radius-sm;
-      box-shadow: v.$shadow-sm;
-      transition: transform 0.2s ease;
-
-      &:hover {
-        transform: scale(1.05);
-      }
-    }
-  }
-}
-
-/* 📱 Responsive */
-@media (max-width: 992px) {
-  .add-property {
-    padding: 2rem;
-
-    h2 {
-      font-size: v.$font-size-lg;
     }
 
-    .form-row {
-      gap: v.$spacing-sm;
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: v.$shadow-md;
     }
-  }
-}
 
-@media (max-width: 768px) {
-  .add-property {
-    padding: 1.5rem;
+    /* modifier BEM and compatible class */
+    &--cover, &.is-cover {
+      border-color: v.$secondary-color;
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
 
-    .form-row {
-      flex-direction: column;
+    /* small actions row under thumb */
+    &-actions {
+      display: flex;
+      gap: v.$spacing-xs;
+      justify-content: center;
+      padding: v.$spacing-xs;
+      background: rgba(255, 255, 255, 0.85);
     }
 
     button {
-      width: 100%;
+      @include m.button(v.$primary-color, v.$primary-color-hover);
+      font-size: v.$font-size-xs;
+      padding: 0.35rem 0.6rem;
+      border-radius: v.$border-radius-sm;
+      min-width: 72px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-delete {
+      @include m.button(v.$error-color, color.adjust(v.$error-color, $lightness: -8%));
+    }
+
+    .btn-cover {
+      background: v.$secondary-color;
+      color: white;
+      &:hover {
+        background: color.adjust(v.$secondary-color, $lightness: -6%);
+      }
     }
   }
-}
 
-@media (max-width: 480px) {
-  .add-property {
-    padding: 1rem;
+  /* Cover-select (radio) inside thumb if needed */
+  &__cover-select {
+    display: inline-flex;
+    align-items: center;
+    gap: v.$spacing-xs;
+    font-size: v.$font-size-sm;
+    color: v.$primary-color;
+    margin-top: v.$spacing-xs;
 
-    h2 {
-      font-size: v.$font-size-md;
+    input[type="radio"] {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  /* Submit button */
+  &__submit {
+    @include m.button(v.$primary-color, v.$primary-color-hover);
+    align-self: flex-end;
+    padding: v.$spacing-md v.$spacing-lg;
+    font-size: v.$font-size-md;
+    border-radius: v.$border-radius-md;
+
+    &:disabled {
+      background: v.$primary-color-disabled;
+      cursor: not-allowed;
     }
 
-    .preview-grid {
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    @media (max-width: 600px) {
+      width: 100%;
+      align-self: stretch;
+    }
+  }
+
+  /* small error message */
+  &__error {
+    color: v.$error-color;
+    background: color.adjust(v.$error-color, $lightness: 45%);
+    padding: v.$spacing-sm;
+    border-radius: v.$border-radius-sm;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 900px) {
+    padding: v.$spacing-lg;
+
+    &__preview {
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: v.$spacing-md;
+
+    &__thumb img {
+      height: 110px;
+    }
+
+    &__group {
+      grid-template-columns: 1fr;
+    }
+
+    &__submit {
+      width: 100%;
     }
   }
 }

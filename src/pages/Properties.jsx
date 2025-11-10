@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 import CardsGrid from "../components/CardsGrid";
 
 export default function Properties() {
@@ -16,29 +17,53 @@ export default function Properties() {
     maxPrecio: "",
   });
 
+  // ✅ Filtros iniciales por URL
   const initialFilters = {
     operacion: params.get("operacion") || "",
     tipo: params.get("tipo") || "",
     zona: params.get("ubicacion") || "",
   };
 
+  // ✅ Cargar propiedades desde el backend real
   useEffect(() => {
-    fetch("https://68cca15b716562cf5077f884.mockapi.io/properties")
-      .then((res) => res.json())
-      .then((data) => setProperties(data))
-      .catch((err) => console.error("Error al cargar propiedades:", err));
+    const fetchProperties = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(`${API_BASE}/api/properties`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Adaptar formato si es necesario
+        const data = res.data.map((p) => ({
+          ...p,
+          precio: p.precio?.valor || p.precio || 0,
+          expensas: p.expensas?.valor || p.expensas || 0,
+        }));
+
+        setProperties(data);
+      } catch (err) {
+        console.error("❌ Error al cargar propiedades:", err);
+      }
+    };
+
+    fetchProperties();
   }, []);
 
+  // ✅ Aplicar filtros dinámicos
   const filteredProperties = properties.filter((p) => {
     if (initialFilters.operacion && p.operacion !== initialFilters.operacion) return false;
     if (initialFilters.tipo && p.tipo !== initialFilters.tipo) return false;
     if (
-      initialFilters.ubicacion &&
-      !p.ubicacion.toLowerCase().includes(initialFilters.ubicacion.toLowerCase())
+      initialFilters.zona &&
+      !p.zona?.toLowerCase().includes(initialFilters.zona.toLowerCase())
     )
       return false;
 
-    if (filters.banios && Number(p.banios) < Number(filters.banios)) return false;
+    if (filters.banios && Number(p.banos) < Number(filters.banios)) return false;
     if (filters.dormitorios && Number(p.dormitorios) < Number(filters.dormitorios)) return false;
     if (filters.ambientes && Number(p.ambientes) < Number(filters.ambientes)) return false;
     if (filters.minPrecio && Number(p.precio) < Number(filters.minPrecio)) return false;

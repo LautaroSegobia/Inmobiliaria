@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AddProperty from "./pages/AddProperty";
 import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
@@ -17,10 +19,27 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<PropertyDetail />} />
-        <Route path="/add-property" element={<AddProperty />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute roles={["admin", "developer", "user"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/add-property"
+          element={
+            <ProtectedRoute roles={["admin", "developer"]}>
+              <AddProperty />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );
