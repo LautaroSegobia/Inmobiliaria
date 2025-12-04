@@ -1,10 +1,18 @@
 
 import { useState } from "react";
-import { addProperty } from "../services/propertyService";
+import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
+import { addProperty } from "../services/propertyService";
 
 const AddProperty = () => {
   const { user } = useAuth();
+
+  const API_BASE =
+    import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== ""
+      ? import.meta.env.VITE_API_URL
+      : "http://localhost:5000";
+
+  // FORMULARIO
   const [form, setForm] = useState({
     titulo: "",
     descripcionCorta: "",
@@ -17,7 +25,7 @@ const AddProperty = () => {
     precio: "",
     expensas: "",
     monedaPrecio: "USD",
-    monedaExpensas: "USD",
+    monedaExpensas: "ARS",
     ambientes: "",
     dormitorios: "",
     banos: "",
@@ -32,35 +40,37 @@ const AddProperty = () => {
     zona: "",
   });
 
-  const [imagenes, setImagenes] = useState([]); // { file, preview, isCover }
+  const [imagenes, setImagenes] = useState([]); // { file, preview, isCover, url, public_id }
   const [error, setError] = useState("");
 
+  // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({
-      ...form,
+    setForm((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
-  // ✅ Carga de imágenes locales con preview
+  // HANDLE FILE SELECT → solo preview
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+
     const newImgs = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       isCover: false,
+      url: null,
+      public_id: null,
     }));
+
     setImagenes((prev) => [...prev, ...newImgs]);
   };
 
-  // ✅ Eliminar imagen
   const handleRemoveImage = (index) => {
-    const newList = imagenes.filter((_, i) => i !== index);
-    setImagenes(newList);
+    setImagenes((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ Marcar como portada
   const handleSetCover = (index) => {
     setImagenes((prev) =>
       prev.map((img, i) => ({
@@ -70,21 +80,115 @@ const AddProperty = () => {
     );
   };
 
-  // ✅ Envío del formulario
+  // SUBIR CADA IMAGEN AL BACKEND (Cloudinary)
+const uploadImage = async (imgFile) => {
+  const formData = new FormData();
+  formData.append("images", imgFile);
+
+  const token = localStorage.getItem("token");
+
+  const res = await axios.post(`${API_BASE}/api/upload`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  console.log("🟢 RESPUESTA DEL BACKEND AL SUBIR IMG:", res.data);
+
+  if (Array.isArray(res.data) && res.data.length > 0) {
+    return {
+      url: res.data[0].url,
+      public_id: res.data[0].public_id,
+      isCover: false
+    };
+  }
+
+  throw new Error("La respuesta del backend no contiene una imagen válida");
+};
+
+  // SUBMIT FINAL
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
+      if (!form.titulo) {
+        alert("El título es obligatorio");
+        return;
+      }
+
+      if (imagenes.length === 0) {
+        alert("Debes subir al menos una imagen");
+        return;
+      }
+
+      // SUBIR TODAS LAS IMÁGENES AL BACKEND
+      const uploadedImages = [];
+
+      for (const img of imagenes) {
+        const uploaded = await uploadImage(img.file);
+        uploadedImages.push({
+          url: uploaded.url,
+          public_id: uploaded.public_id,
+          isCover: img.isCover || false,
+        });
+      }
+
+      const mainImage =
+        uploadedImages.find((i) => i.isCover) || uploadedImages[0];
+
+      // ARMAR OBJETO EXACTO PARA EL BACKEND
       const data = {
-        ...form,
-        imagenes,
-        createdBy: user?.email || "anon",
+        titulo: form.titulo,
+        descripcionCorta: form.descripcionCorta,
+        descripcionLarga: form.descripcionLarga,
+        operacion: form.operacion,
+        tipo: form.tipo,
+
+        m2Cubiertos: Number(form.m2Cubiertos) || 0,
+        m2Descubiertos: Number(form.m2Descubiertos) || 0,
+        m2Totales: Number(form.m2Totales) || 0,
+
+        precio: {
+          valor: Number(form.precio) || 0,
+          moneda: form.monedaPrecio,
+        },
+
+        expensas: {
+          valor: Number(form.expensas) || 0,
+          moneda: form.monedaExpensas,
+        },
+
+        ambientes: Number(form.ambientes) || 0,
+        dormitorios: Number(form.dormitorios) || 0,
+        banos: Number(form.banos) || 0,
+
+        luminosidad: form.luminosidad,
+        orientacion: form.orientacion,
+        piso: form.piso,
+        antiguedad: form.antiguedad,
+
+        cochera: !!form.cochera,
+        balcon: !!form.balcon,
+
+        calle: form.calle,
+        numero: form.numero,
+        zona: form.zona,
+
+        mainImage,
+        multimedia: uploadedImages,
+        creadoPor: user?._id || user?.id || null,
       };
 
-      console.log("🟢 Enviando propiedad a backend:", data);
-      const response = await addProperty(data);
-      console.log("✅ Respuesta del servidor:", response);
+      console.log("🟢 ENVIANDO AL BACKEND:", data);
 
+      const response = await addProperty(data);
+
+      console.log("✅ RESPUESTA BACKEND:", response);
       alert("Propiedad agregada correctamente!");
+
+      // Reset form
       setForm({
         titulo: "",
         descripcionCorta: "",
@@ -97,7 +201,7 @@ const AddProperty = () => {
         precio: "",
         expensas: "",
         monedaPrecio: "USD",
-        monedaExpensas: "USD",
+        monedaExpensas: "ARS",
         ambientes: "",
         dormitorios: "",
         banos: "",
@@ -111,19 +215,22 @@ const AddProperty = () => {
         numero: "",
         zona: "",
       });
+
       setImagenes([]);
     } catch (err) {
-      console.error("❌ Error al agregar propiedad:", err);
-      setError("Error al agregar la propiedad. Ver consola para más detalles.");
+      console.error("❌ ERROR AL AGREGAR PROPIEDAD:", err);
+      setError("No se pudo agregar la propiedad.");
     }
   };
 
+  // RENDER
   return (
     <div className="add-property">
       <h1 className="add-property__title">Agregar Propiedad</h1>
 
       <form className="add-property__form" onSubmit={handleSubmit}>
-        {/* Título */}
+        {/* Mantengo todos tus inputs EXACTAMENTE IGUALES */}
+        
         <div className="add-property__group">
           <label>Título</label>
           <input
@@ -135,7 +242,6 @@ const AddProperty = () => {
           />
         </div>
 
-        {/* Descripción corta */}
         <div className="add-property__group">
           <label>Descripción corta</label>
           <input
@@ -146,7 +252,6 @@ const AddProperty = () => {
           />
         </div>
 
-        {/* Descripción larga */}
         <div className="add-property__group">
           <label>Descripción larga</label>
           <textarea
@@ -157,7 +262,7 @@ const AddProperty = () => {
           />
         </div>
 
-        {/* Operación - Tipo */}
+        {/* Operación + Tipo */}
         <div className="add-property__group">
           <div>
             <label>Operación</label>
@@ -171,6 +276,7 @@ const AddProperty = () => {
               <option value="alquiler">Alquiler</option>
             </select>
           </div>
+
           <div>
             <label>Tipo</label>
             <select name="tipo" value={form.tipo} onChange={handleChange}>
@@ -185,7 +291,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* Superficies */}
+        {/* SUPERFICIES */}
         <div className="add-property__group">
           <div>
             <label>m² Cubiertos</label>
@@ -196,6 +302,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>m² Descubiertos</label>
             <input
@@ -205,6 +312,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>m² Totales</label>
             <input
@@ -216,7 +324,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* Precio / Expensas */}
+        {/* PRECIO / EXPENSAS */}
         <div className="add-property__group">
           <div>
             <label>Precio</label>
@@ -227,6 +335,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Moneda</label>
             <select
@@ -238,6 +347,7 @@ const AddProperty = () => {
               <option value="ARS">ARS</option>
             </select>
           </div>
+
           <div>
             <label>Expensas</label>
             <input
@@ -247,6 +357,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Moneda</label>
             <select
@@ -254,13 +365,13 @@ const AddProperty = () => {
               value={form.monedaExpensas}
               onChange={handleChange}
             >
-              <option value="USD">USD</option>
               <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
             </select>
           </div>
         </div>
 
-        {/* Ambientes / Dormitorios / Baños */}
+        {/* AMBIENTES */}
         <div className="add-property__group">
           <div>
             <label>Ambientes</label>
@@ -271,6 +382,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Dormitorios</label>
             <input
@@ -280,6 +392,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Baños</label>
             <input
@@ -291,7 +404,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* Luminosidad / Orientación */}
+        {/* LUMINOSIDAD / ORIENTACIÓN */}
         <div className="add-property__group">
           <div>
             <label>Luminosidad</label>
@@ -306,6 +419,7 @@ const AddProperty = () => {
               <option value="baja">Baja</option>
             </select>
           </div>
+
           <div>
             <label>Orientación</label>
             <select
@@ -322,7 +436,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* Piso / Antigüedad */}
+        {/* PISO / ANTIGÜEDAD */}
         <div className="add-property__group">
           <div>
             <label>Piso</label>
@@ -333,6 +447,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Antigüedad (años)</label>
             <input
@@ -344,7 +459,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* 🚗 / 🌇 */}
+        {/* CHECKBOXES */}
         <div className="add-property__checkboxes">
           <label>
             <input
@@ -355,6 +470,7 @@ const AddProperty = () => {
             />
             Cochera
           </label>
+
           <label>
             <input
               type="checkbox"
@@ -366,7 +482,7 @@ const AddProperty = () => {
           </label>
         </div>
 
-        {/* 📍 Dirección */}
+        {/* DIRECCIÓN */}
         <div className="add-property__group">
           <div>
             <label>Calle</label>
@@ -377,6 +493,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Número</label>
             <input
@@ -386,6 +503,7 @@ const AddProperty = () => {
               onChange={handleChange}
             />
           </div>
+
           <div>
             <label>Zona</label>
             <input
@@ -397,7 +515,7 @@ const AddProperty = () => {
           </div>
         </div>
 
-        {/* 📸 Carga multimedia */}
+        {/* ARCHIVOS */}
         <div className="add-property__upload">
           <label className="add-property__upload__label">
             Cargar archivos multimedia
@@ -409,7 +527,6 @@ const AddProperty = () => {
             onChange={handleFileChange}
           />
 
-          {/* Vista previa */}
           <div className="add-property__preview">
             {imagenes.map((img, index) => (
               <div
@@ -419,6 +536,7 @@ const AddProperty = () => {
                 }`}
               >
                 <img src={img.preview} alt={`preview-${index}`} />
+
                 <div className="add-property__thumb-actions">
                   <button
                     type="button"
@@ -427,6 +545,7 @@ const AddProperty = () => {
                   >
                     Portada
                   </button>
+
                   <button
                     type="button"
                     className="btn-delete"

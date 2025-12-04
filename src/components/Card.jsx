@@ -9,10 +9,10 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { useAuth } from "../contexts/AuthContext"; // ✅ usamos el hook personalizado
+import { useAuth } from "../contexts/AuthContext";
 
 const FALLBACK_IMAGE = "https://placehold.co/400x250?text=Sin+Imagen";
-const WHATSAPP_PHONE = "5491134567890"; // ⚠️ Ajustar número
+const WHATSAPP_PHONE = "5491134567890";
 
 export default function Card({
   id,
@@ -29,20 +29,18 @@ export default function Card({
   tag,
   autoplay = true,
   autoplayInterval = 3000,
-  onEdit, // opcional: función para editar
-  onDelete, // opcional: función para eliminar
+  onEdit,
+  onDelete,
 }) {
-  const { user } = useAuth(); // ✅ obtenemos usuario logueado
+  const { user } = useAuth();
 
   // Dirección combinada
   const location = [calle, numero, zona].filter(Boolean).join(" ");
 
   // Normalizar imágenes
   const allImages = Array.isArray(images)
-    ? images
-    : Array.isArray(image)
-    ? image
-    : [image || FALLBACK_IMAGE];
+  ? images
+  : [typeof image === "string" ? image : image?.url || FALLBACK_IMAGE];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);

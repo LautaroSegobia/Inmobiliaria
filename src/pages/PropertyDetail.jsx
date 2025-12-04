@@ -1,11 +1,9 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// brand
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-// solid
 import {
   faEnvelope,
   faXmark,
@@ -13,32 +11,26 @@ import {
   faChevronRight,
   faHome,
   faTag,
-  faRulerCombined,
   faBed,
   faBath,
   faCar,
-  faBuilding,
   faCalendarAlt,
-  faSun,
   faCompass,
   faMapMarkerAlt,
-  faImages,
 } from "@fortawesome/free-solid-svg-icons";
 
 const FALLBACK_IMAGE = "https://placehold.co/1200x800?text=Imagen+no+disponible";
 const WHATSAPP_PHONE = "5491134567890";
-const MOCKAPI_BASE = "https://68cca15b716562cf5077f884.mockapi.io/properties";
 
 export default function PropertyDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-
   const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [thumbIndex, setThumbIndex] = useState(0);
-
+  const [selectedImage, setSelectedImage] = useState(FALLBACK_IMAGE);
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -48,26 +40,67 @@ export default function PropertyDetail() {
   const originRef = useRef({ x: 0, y: 0 });
   const lastTouchDistanceRef = useRef(null);
 
+  // URL CORREGIDA: local → local, producción → producción
+  const API_BASE =
+    import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== ""
+      ? import.meta.env.VITE_API_URL
+      : "http://localhost:5000";
+
+  // --- CARGA DE DATOS ---
   useEffect(() => {
+    if (!id) return;
+
     let mounted = true;
+
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${MOCKAPI_BASE}/${id}`);
+        const res = await axios.get(`${API_BASE}/api/properties/${id}`);
+
         if (!mounted) return;
-        const p = res.data || {};
+
+        const p = res.data;
+        if (!p || Object.keys(p).length === 0) throw new Error("Propiedad no encontrada");
+
         setProperty(p);
 
-        const imgs =
-          Array.isArray(p.imagenes) && p.imagenes.length
-            ? p.imagenes
-            : p.imagen
-            ? [p.imagen]
-            : [FALLBACK_IMAGE];
+        // -----------------------------------------------------------
+        // NORMALIZACIÓN FORTALECIDA DE IMÁGENES (no rompe más)
+        // -----------------------------------------------------------
+        let imgs = [];
+
+        // 1) multimedia (correcto nuevo backend)
+        if (Array.isArray(p.multimedia) && p.multimedia.length > 0) {
+          imgs = p.multimedia.map((img) =>
+            typeof img === "string" ? img : img?.url || FALLBACK_IMAGE
+          );
+        }
+        // 2) imagenes (backend viejo)
+        else if (Array.isArray(p.imagenes) && p.imagenes.length > 0) {
+          imgs = p.imagenes.map((img) =>
+            typeof img === "string" ? img : img?.url || FALLBACK_IMAGE
+          );
+        }
+        // 3) mainImage → puede ser {url} o string
+        else if (p.mainImage) {
+          imgs = [
+            typeof p.mainImage === "string"
+              ? p.mainImage
+              : p.mainImage?.url || FALLBACK_IMAGE,
+          ];
+        }
+        // 4) formato muy viejo
+        else if (p.imagen) {
+          imgs = [p.imagen];
+        }
+        // 5) fallback absoluto
+        else {
+          imgs = [FALLBACK_IMAGE];
+        }
 
         setImages(imgs);
-        setSelectedImage((prev) => prev || imgs[0]);
-        setThumbIndex(0);
+        setSelectedImage(imgs[0]);
+
       } catch (err) {
         console.error("Error al cargar propiedad:", err);
         setError(true);
@@ -77,53 +110,39 @@ export default function PropertyDetail() {
     };
 
     fetchProperty();
-    return () => {
-      mounted = false;
-    };
-  }, [id]);
+    return () => (mounted = false);
+  }, [id, API_BASE]);
 
-  const direccionCompleta = (p = property) =>
-    `${p?.calle ?? ""} ${p?.numero ?? ""}${p?.zona ? `, ${p.zona}` : ""}`.trim();
-
-  const formatPrice = (val, currency) => {
-    const n = Number(val || 0);
-    const curr = currency || "ARS";
-    try {
-      return new Intl.NumberFormat("es-AR", {
-        style: "currency",
-        currency: ["ARS", "USD"].includes(curr) ? curr : "ARS",
-        minimumFractionDigits: 0,
-      }).format(n);
-    } catch {
-      return `${curr} ${n.toLocaleString("es-AR")}`;
-    }
+  // --- HELPERS ---
+  const direccionCompleta = (p = property) => {
+    const calle = p?.calle || "";
+    const numero = p?.numero || "";
+    const zona = p?.zona || "";
+    return [calle, numero, zona].filter(Boolean).join(" ");
   };
 
-  const handleWhatsApp = () => {
-    if (!property) return;
-    const msg = `Hola! Estoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(
-      property
-    )}.`;
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
+  const formatPrice = (val) => {
+    if (!val) return "";
+
+    const valor = typeof val === "object" ? val.valor : Number(val) || 0;
+    const moneda =
+      typeof val === "object" ? val.moneda || "ARS" : "ARS";
+
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: ["ARS", "USD"].includes(moneda) ? moneda : "ARS",
+      minimumFractionDigits: 0,
+    }).format(valor);
   };
 
-  const handleEmail = () => {
-    if (!property) return;
-    const subject = `Consulta sobre ${property.titulo}`;
-    const body = `Hola,%0A%0AEstoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(
-      property
-    )}.%0A%0AGracias.`;
-    window.location.href = `mailto:info@medinaabella.com?subject=${encodeURIComponent(
-      subject
-    )}&body=${body}`;
-  };
-
+  // --- MODAL ---
   const openModal = (img) => {
     setSelectedImage(img);
     setModalOpen(true);
     setZoom(1);
     setPosition({ x: 0, y: 0 });
   };
+
   const closeModal = () => {
     setModalOpen(false);
     setZoom(1);
@@ -132,22 +151,20 @@ export default function PropertyDetail() {
     lastTouchDistanceRef.current = null;
   };
 
+  // --- NAVEGACIÓN DE IMÁGENES ---
   const goPrev = useCallback(() => {
-    if (!images.length) return;
     const i = images.indexOf(selectedImage);
     const prev = i <= 0 ? images.length - 1 : i - 1;
     setSelectedImage(images[prev]);
-    setThumbIndex(prev);
   }, [images, selectedImage]);
 
   const goNext = useCallback(() => {
-    if (!images.length) return;
     const i = images.indexOf(selectedImage);
     const next = (i + 1) % images.length;
     setSelectedImage(images[next]);
-    setThumbIndex(next);
   }, [images, selectedImage]);
 
+  // --- ZOOM Y DRAG ---
   const handleWheel = (e) => {
     e.preventDefault();
     setZoom((prev) => Math.min(Math.max(prev + e.deltaY * -0.0015, 1), 4));
@@ -159,77 +176,55 @@ export default function PropertyDetail() {
     startRef.current = { x: e.clientX, y: e.clientY };
     originRef.current = { ...position };
   };
+
   const handleMouseMove = (e) => {
     if (!draggingRef.current || zoom <= 1) return;
     const dx = e.clientX - startRef.current.x;
     const dy = e.clientY - startRef.current.y;
     setPosition({ x: originRef.current.x + dx, y: originRef.current.y + dy });
   };
+
   const handleMouseUp = () => {
     draggingRef.current = false;
   };
 
-  function getTouchDistance(touches) {
-    if (!touches || touches.length < 2) return 0;
-    const [a, b] = touches;
-    return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-  }
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 2) {
-      lastTouchDistanceRef.current = getTouchDistance(e.touches);
-    } else if (e.touches.length === 1 && zoom > 1) {
-      draggingRef.current = true;
-      startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      originRef.current = { ...position };
-    }
-  };
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 2) {
-      const newDistance = getTouchDistance(e.touches);
-      if (lastTouchDistanceRef.current) {
-        const delta = newDistance - lastTouchDistanceRef.current;
-        setZoom((prev) => Math.min(Math.max(prev + delta * 0.005, 1), 4));
-      }
-      lastTouchDistanceRef.current = newDistance;
-    } else if (e.touches.length === 1 && draggingRef.current && zoom > 1) {
-      const dx = e.touches[0].clientX - startRef.current.x;
-      const dy = e.touches[0].clientY - startRef.current.y;
-      setPosition({ x: originRef.current.x + dx, y: originRef.current.y + dy });
-    }
-  };
-  const handleTouchEnd = () => {
-    draggingRef.current = false;
-    lastTouchDistanceRef.current = null;
+  // --- CONTACTO ---
+  const handleWhatsApp = () => {
+    if (!property) return;
+    const msg = `Hola! Estoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(property)}.`;
+    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!modalOpen) return;
-      if (e.key === "Escape") closeModal();
-      if (e.key === "ArrowLeft") goPrev();
-      if (e.key === "ArrowRight") goNext();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [modalOpen, goPrev, goNext]);
+  const handleEmail = () => {
+    if (!property) return;
+    const subject = `Consulta sobre ${property.titulo}`;
+    const body = `Hola,%0A%0AEstoy interesado en la propiedad "${property.titulo}" ubicada en ${direccionCompleta(property)}.%0A%0AGracias.`;
+    window.location.href = `mailto:info@medinaabella.com?subject=${encodeURIComponent(subject)}&body=${body}`;
+  };
 
-  if (loading) return <div className="loading">Cargando...</div>;
-  if (error || !property) return <div className="error">Propiedad no encontrada</div>;
+  // --- RENDER ---
+  if (loading) return <div className="loading">Cargando propiedad...</div>;
+  if (error || !property)
+    return (
+      <div className="error">
+        No se encontró la propiedad o ocurrió un error.{" "}
+        <button onClick={() => navigate(-1)}>Volver</button>
+      </div>
+    );
 
   return (
     <main className="property-detail container">
       <div className="property-detail__grid">
+        {/* IZQUIERDA */}
         <div className="property-detail__left">
           <section className="property-detail__gallery">
             <div
               className="gallery-main"
               onClick={() => openModal(selectedImage)}
               role="button"
-              aria-label="Abrir imagen en modal"
             >
               <img
-                src={selectedImage || FALLBACK_IMAGE}
+                src={selectedImage}
                 alt={property.titulo}
                 onError={(e) => (e.target.src = FALLBACK_IMAGE)}
                 className="gallery-main__img"
@@ -239,19 +234,14 @@ export default function PropertyDetail() {
             <div className="gallery-thumbs" aria-hidden={modalOpen}>
               {images.map((img, idx) => (
                 <button
-                  key={idx}
+                  key={`${idx}-${img}`}
                   className={`thumb ${selectedImage === img ? "active" : ""}`}
-                  onClick={() => {
-                    setSelectedImage(img);
-                    setThumbIndex(idx);
-                  }}
-                  aria-label={`Seleccionar imagen ${idx + 1}`}
+                  onClick={() => setSelectedImage(img)}
                 >
                   <img
-                    src={img || FALLBACK_IMAGE}
+                    src={img}
                     alt={`thumb-${idx}`}
                     onError={(e) => (e.target.src = FALLBACK_IMAGE)}
-                    className="thumb__img"
                   />
                 </button>
               ))}
@@ -260,66 +250,85 @@ export default function PropertyDetail() {
 
           <section className="property-detail__description">
             <h3>Descripción</h3>
-            <p>{property.descripcionLarga || property.descripcionCorta || "Sin descripción disponible."}</p>
+            <p>
+              {property.descripcionLarga ||
+                property.descripcionCorta ||
+                "Sin descripción disponible."}
+            </p>
           </section>
         </div>
 
+        {/* DERECHA */}
         <aside className="property-detail__right">
           <section className="property-detail__info">
-            <h1 className="info__title">{property.titulo}</h1>
-            <p className="info__address">
-              <FontAwesomeIcon icon={faMapMarkerAlt} /> <span>{direccionCompleta()}</span>
+            <h1>{property.titulo}</h1>
+            <p>
+              <FontAwesomeIcon icon={faMapMarkerAlt} /> {direccionCompleta()}
             </p>
-            <p className="info__price">{formatPrice(property.precio, property.moneda)}</p>
 
-            {Number(property.expensas) > 0 && (
-              <p className="info__expenses">
-                Expensas: {property.monedaExpensas || "ARS"} {Number(property.expensas).toLocaleString("es-AR")}
+            <p className="price">
+              {formatPrice(property.precio)}
+            </p>
+
+            {property.expensas && (
+              <p className="expenses">
+                Expensas: {formatPrice(property.expensas)}
               </p>
             )}
 
-            <div className="info__actions">
-              <button className="btn btn--whatsapp" onClick={handleWhatsApp}>
-                <FontAwesomeIcon icon={faWhatsapp} /> <span>WhatsApp</span>
+            <div className="actions">
+              <button onClick={handleWhatsApp} className="btn btn--whatsapp">
+                <FontAwesomeIcon icon={faWhatsapp} /> WhatsApp
               </button>
-              <button className="btn btn--mail" onClick={handleEmail}>
-                <FontAwesomeIcon icon={faEnvelope} /> <span>Mail</span>
+              <button onClick={handleEmail} className="btn btn--mail">
+                <FontAwesomeIcon icon={faEnvelope} /> Mail
               </button>
             </div>
 
-            <ul className="info__features">
-              <li><FontAwesomeIcon icon={faTag} /> <span>{property.operacion ?? "—"}</span></li>
-              <li><FontAwesomeIcon icon={faHome} /> <span>{property.tipo ?? "—"}</span></li>
-              <li><FontAwesomeIcon icon={faBed} /> <span>{property.dormitorios ?? 0} dormitorios</span></li>
-              <li><FontAwesomeIcon icon={faBath} /> <span>{property.banios ?? 0} baños</span></li>
-              <li><FontAwesomeIcon icon={faRulerCombined} /> <span>{property.metrosCubiertos ?? "—"} m² cub.</span></li>
-              <li><FontAwesomeIcon icon={faImages} /> <span>{property.metrosDescubiertos ?? "—"} m² desc.</span></li>
-              <li><FontAwesomeIcon icon={faRulerCombined} /> <span>{property.metrosTotales ?? "—"} m² tot.</span></li>
-              <li><FontAwesomeIcon icon={faBuilding} /> <span>Piso {property.piso ?? "—"}</span></li>
-              <li><FontAwesomeIcon icon={faCar} /> <span>{property.cochera ? "Con cochera" : "Sin cochera"}</span></li>
-              <li><FontAwesomeIcon icon={faHome} /> <span>{property.balcon ? "Con balcón" : "Sin balcón"}</span></li>
-              <li><FontAwesomeIcon icon={faCalendarAlt} /> <span>{property.antiguedad ?? "—"} años</span></li>
-              <li><FontAwesomeIcon icon={faSun} /> <span>Luminosidad: {property.luminosidad ?? "—"}</span></li>
-              <li><FontAwesomeIcon icon={faCompass} /> <span>Orientación: {property.orientacion ?? "—"}</span></li>
-              <li><FontAwesomeIcon icon={faMapMarkerAlt} /> <span>Zona: {property.zona ?? "—"}</span></li>
+            <ul className="features">
+              <li>
+                <FontAwesomeIcon icon={faTag} /> {property.operacion ?? "—"}
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faHome} /> {property.tipo ?? "—"}
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faBed} /> {property.dormitorios ?? 0} dormitorios
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faBath} /> {property.banos ?? 0} baños
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faCar} />{" "}
+                {property.cochera ? "Con cochera" : "Sin cochera"}
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faCalendarAlt} /> {property.antiguedad ?? "—"} años
+              </li>
+              <li>
+                <FontAwesomeIcon icon={faCompass} /> Orientación:{" "}
+                {property.orientacion ?? "—"}
+              </li>
             </ul>
           </section>
 
           <section className="property-detail__map">
             <h4>Ubicación</h4>
-            <p className="map__address">{direccionCompleta()}</p>
             <iframe
               title="mapa"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(
+                direccionCompleta()
+              )}&output=embed`}
               className="map__iframe"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(direccionCompleta())}&output=embed`}
               loading="lazy"
             />
           </section>
         </aside>
       </div>
 
+      {/* MODAL DE IMAGEN */}
       {modalOpen && (
-        <div className="image-modal" onClick={closeModal} role="dialog" aria-modal="true">
+        <div className="image-modal" onClick={closeModal}>
           <div
             className="image-modal__content"
             onClick={(e) => e.stopPropagation()}
@@ -332,25 +341,37 @@ export default function PropertyDetail() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <button className="image-modal__close" onClick={closeModal} aria-label="Cerrar">
+            <button className="close-btn" onClick={closeModal}>
               <FontAwesomeIcon icon={faXmark} />
             </button>
 
             <img
-              src={selectedImage || FALLBACK_IMAGE}
+              src={selectedImage}
               alt="Vista ampliada"
               draggable={false}
-              className="image-modal__img"
-              onClick={() => setZoom((z) => (z === 1 ? 2 : 1))}
-              style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})` }}
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+              }}
             />
 
             {images.length > 1 && (
               <>
-                <button className="image-modal__nav image-modal__nav--prev" aria-label="Anterior" onClick={(e) => { e.stopPropagation(); goPrev(); }}>
+                <button
+                  className="nav prev"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goPrev();
+                  }}
+                >
                   <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
-                <button className="image-modal__nav image-modal__nav--next" aria-label="Siguiente" onClick={(e) => { e.stopPropagation(); goNext(); }}>
+                <button
+                  className="nav next"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goNext();
+                  }}
+                >
                   <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               </>
