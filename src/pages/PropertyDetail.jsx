@@ -41,10 +41,7 @@ export default function PropertyDetail() {
   const lastTouchDistanceRef = useRef(null);
 
   // URL CORREGIDA: local → local, producción → producción
-  const API_BASE =
-    import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== ""
-      ? import.meta.env.VITE_API_URL
-      : "http://localhost:5000";
+  const API_BASE = import.meta.env.VITE_API_URL;
 
   // --- CARGA DE DATOS ---
   useEffect(() => {
@@ -64,9 +61,8 @@ export default function PropertyDetail() {
 
         setProperty(p);
 
-        // -----------------------------------------------------------
         // NORMALIZACIÓN FORTALECIDA DE IMÁGENES (no rompe más)
-        // -----------------------------------------------------------
+  
         let imgs = [];
 
         // 1) multimedia (correcto nuevo backend)
@@ -186,7 +182,63 @@ export default function PropertyDetail() {
 
   const handleMouseUp = () => {
     draggingRef.current = false;
-  };
+  }; 
+
+  // --- TOUCH EVENTS PARA MOBILE ---
+
+const handleTouchStart = (e) => {
+  if (e.touches.length === 1) {
+    // Drag
+    draggingRef.current = true;
+    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    originRef.current = { ...position };
+  } else if (e.touches.length === 2) {
+    // Pinch zoom
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    lastTouchDistanceRef.current = Math.hypot(
+      touch1.clientX - touch2.clientX,
+      touch1.clientY - touch2.clientY
+    );
+  }
+};
+
+const handleTouchMove = (e) => {
+  if (e.touches.length === 1 && draggingRef.current && zoom > 1) {
+    // Drag image
+    const dx = e.touches[0].clientX - startRef.current.x;
+    const dy = e.touches[0].clientY - startRef.current.y;
+    setPosition({
+      x: originRef.current.x + dx,
+      y: originRef.current.y + dy,
+    });
+  }
+
+  if (e.touches.length === 2) {
+    // Pinch zoom
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const newDistance = Math.hypot(
+      touch1.clientX - touch2.clientX,
+      touch1.clientY - touch2.clientY
+    );
+
+    if (lastTouchDistanceRef.current) {
+      const diff = newDistance - lastTouchDistanceRef.current;
+      setZoom((prev) => {
+        let next = prev + diff * 0.01;
+        return Math.min(Math.max(next, 1), 4);
+      });
+    }
+
+    lastTouchDistanceRef.current = newDistance;
+  }
+};
+
+const handleTouchEnd = () => {
+  draggingRef.current = false;
+  lastTouchDistanceRef.current = null;
+};
 
   // --- CONTACTO ---
   const handleWhatsApp = () => {

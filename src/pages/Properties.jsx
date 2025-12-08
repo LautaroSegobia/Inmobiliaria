@@ -27,15 +27,15 @@ export default function Properties() {
   // ✅ Cargar propiedades desde el backend real
   useEffect(() => {
     const fetchProperties = async () => {
-      try {
-        const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const token = localStorage.getItem("token");
+  try {
+    const API_BASE = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
 
-        const res = await axios.get(`${API_BASE}/api/properties`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    const res = await axios.get(`${API_BASE}/api/properties`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
         // Adaptar formato si es necesario
         const data = res.data.map((p) => ({

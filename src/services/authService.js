@@ -1,14 +1,16 @@
 
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_URL;
 
-// ✅ Registro de usuario
+//  Registro de usuario
 export const registerUser = async (userData) => {
   try {
-    const response = await axios.post(`${API_BASE}/api/users/register`, userData);
+    const response = await axios.post(
+      `${API_BASE}/api/users/register`,
+      userData
+    );
 
-    // Guardar token y usuario si el backend lo devuelve
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -16,17 +18,19 @@ export const registerUser = async (userData) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al registrar usuario:", error.response?.data || error.message);
-    throw error;
+    console.error("❌ Error al registrar usuario:", error.response?.data);
+    throw new Error(error.response?.data?.message || "Error al registrar usuario");
   }
 };
 
-// ✅ Login de usuario
+//  Login de usuario
 export const loginUser = async (credentials) => {
   try {
-    const response = await axios.post(`${API_BASE}/api/users/login`, credentials);
+    const response = await axios.post(
+      `${API_BASE}/api/users/login`,
+      credentials
+    );
 
-    // Guardar token y usuario
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -34,12 +38,12 @@ export const loginUser = async (credentials) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al iniciar sesión:", error.response?.data || error.message);
-    throw error;
+    console.error("❌ Error al iniciar sesión:", error.response?.data);
+    throw new Error(error.response?.data?.message || "Error al iniciar sesión");
   }
 };
 
-// ✅ Cerrar sesión
+//  Logout
 export const logoutUser = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

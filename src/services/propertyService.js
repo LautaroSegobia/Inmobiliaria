@@ -1,17 +1,14 @@
 
 import axios from "axios";
 
-// AGREGAR PROPIEDAD
+const API_BASE = import.meta.env.VITE_API_URL;
+
+//  Agregar Propiedad
 export const addProperty = async (propertyData) => {
   try {
     console.log("🟢 ENVIANDO AL BACKEND:", propertyData);
 
-    // El formulario YA envía todo correctamente armado.
-    // NO volver a transformarlo.
-
-    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const token = localStorage.getItem("token");
-
     if (!token) throw new Error("No estás autenticado");
 
     const response = await axios.post(
@@ -23,11 +20,14 @@ export const addProperty = async (propertyData) => {
     );
 
     return response.data;
+
   } catch (error) {
     console.error("❌ Error al agregar propiedad:", error);
     console.error("📩 Respuesta backend:", error.response?.data);
+
     throw new Error(
-      error.response?.data?.message || "No se pudo agregar la propiedad"
+      error.response?.data?.message ||
+        "No se pudo agregar la propiedad"
     );
   }
 };

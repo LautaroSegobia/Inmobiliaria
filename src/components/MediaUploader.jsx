@@ -4,14 +4,7 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faGripVertical, faUpload } from "@fortawesome/free-solid-svg-icons";
 
-/*
-  Props:
-   - initialItems: [{ url, tipo, public_id? }]  // existing media (editing)
-   - onChange(items) -> recibe el array actualizado
-   - apiUploadUrl (string) optional -> si está, se POSTea ahí { file } y se espera { url, public_id, tipo }
-   - cloudinaryConfig fallback: { cloudName, uploadPreset }
-   - accept: "image/*,video/*"
-*/
+
 export default function MediaUploader({
   initialItems = [],
   onChange,
